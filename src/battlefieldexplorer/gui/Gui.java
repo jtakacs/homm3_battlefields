@@ -13,6 +13,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
+import org.oxbow.swingbits.table.filter.TableRowFilterSupport;
 
 public final class Gui extends javax.swing.JFrame {
 
@@ -43,6 +44,11 @@ public final class Gui extends javax.swing.JFrame {
     debugBtn.setVisible(false);
     canvas.updateUI();
     loadingIndicator.start();
+    TableRowFilterSupport
+      .forTable(jTable1)
+      .actions(true)
+      .searchable(true)
+      .apply();
     final JFrame parent = this;
     new Thread(() -> {
       BattleFieldInfo.load();
@@ -56,7 +62,6 @@ public final class Gui extends javax.swing.JFrame {
   @SuppressWarnings("unchecked")
   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
   private void initComponents() {
-    java.awt.GridBagConstraints gridBagConstraints;
 
     results = new javax.swing.JScrollPane();
     jTable1 = new javax.swing.JTable();
@@ -130,7 +135,7 @@ public final class Gui extends javax.swing.JFrame {
     });
 
     cursorNavigation.setText("Cursor navigation");
-    cursorNavigation.setToolTipText("Cursors: change map coordinates\nPageUp, PageDown: change terrain\nO: toggle obstacle view\nH: toggle hex grid");
+    cursorNavigation.setToolTipText("<html><b>Cursors:</b> change map coordinates<br/>\n<b>PageUp, PageDown:</b> change terrain<br/>\n<b>O:</b> toggle obstacle view<br/>\n<b>H:</b> toggle hex grid<br/>");
     cursorNavigation.addFocusListener(new java.awt.event.FocusAdapter() {
       public void focusLost(java.awt.event.FocusEvent evt) {
         cursorNavigationFocusLost(evt);

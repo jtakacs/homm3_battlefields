@@ -186,7 +186,7 @@
         <Component class="javax.swing.JToggleButton" name="cursorNavigation">
           <Properties>
             <Property name="text" type="java.lang.String" value="Cursor navigation"/>
-            <Property name="toolTipText" type="java.lang.String" value="Cursors: change map coordinates&#xa;PageUp, PageDown: change terrain&#xa;O: toggle obstacle view&#xa;H: toggle hex grid"/>
+            <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&lt;b&gt;Cursors:&lt;/b&gt; change map coordinates&lt;br/&gt;&#xa;&lt;b&gt;PageUp, PageDown:&lt;/b&gt; change terrain&lt;br/&gt;&#xa;&lt;b&gt;O:&lt;/b&gt; toggle obstacle view&lt;br/&gt;&#xa;&lt;b&gt;H:&lt;/b&gt; toggle hex grid&lt;br/&gt;"/>
           </Properties>
           <Events>
             <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="cursorNavigationFocusLost"/>
