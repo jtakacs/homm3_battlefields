@@ -78,7 +78,7 @@ public class Gui2 extends JFrame {
       background.updateUI();
       placeObstacles(bf.obstacles);
       setPassability(bf.getBlockedHexes());
-      setControlState(bf);
+//      setControlState(bf);
     });
   }
 

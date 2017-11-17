@@ -26,7 +26,8 @@ public class RowSelectionListener implements ListSelectionListener {
     final int row = jTable1.getSelectedRow();
     if (row >= 0) {
       final Battlefield bf = tm.getValue(jTable1.convertRowIndexToModel(row));
-      frame.setControlState(bf);
+//      frame.setControlState(bf);
+      frame.displayBattlefield(bf);
     }
   }
 }
