@@ -48,6 +48,7 @@ public class PositionedObstacle implements Comparable<PositionedObstacle> {
   }
 
   private int calc(final boolean coord_Y) {
+    //TODO these magic numbers need some tweaking
     final int half = posY / 2;
     final int tmp = 84 * half + 52;
     final int rpY1 = tmp + (isOddRow(posY) ? 42 : 0);
@@ -68,11 +69,11 @@ public class PositionedObstacle implements Comparable<PositionedObstacle> {
   }
 
   @Override
-  public int compareTo(final PositionedObstacle o) {
-    if (o == null) {
+  public int compareTo(final PositionedObstacle other) {
+    if (other == null) {
       return 1;
     }
-    return Integer.compare(o.getScreenY(), this.getScreenY());
+    return Integer.compare(this.getScreenY(),other.getScreenY());
   }
 
 }

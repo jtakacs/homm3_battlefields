@@ -30,7 +30,7 @@ public final class TerrainInfo extends AbstractListModel<String> {
 
   @Override
   public String getElementAt(int index) {
-    return Terrain.get(index).map(t -> t.description).orElse("");
+    return Terrain.get(index).map(t -> " "+t.description).orElse("");
   }
 
   public Optional<Terrain> get(int index) {

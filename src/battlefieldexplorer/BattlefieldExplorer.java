@@ -1,6 +1,6 @@
 package battlefieldexplorer;
 
-import battlefieldexplorer.gui.Gui;
+import battlefieldexplorer.gui.Gui2;
 
 public final class BattlefieldExplorer {
 
@@ -8,7 +8,8 @@ public final class BattlefieldExplorer {
   }
 
   public static void main(String[] args) {
-    Gui.start();
+//    Gui.start();
+    Gui2.start();
   }
 
 }

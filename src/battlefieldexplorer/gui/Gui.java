@@ -1,6 +1,5 @@
 package battlefieldexplorer.gui;
 
-import static battlefieldexplorer.util.HexTools.hexdump;
 import static javax.swing.SwingUtilities.invokeLater;
 import static javax.swing.UIManager.getInstalledLookAndFeels;
 import static javax.swing.UIManager.setLookAndFeel;
@@ -39,7 +38,7 @@ public final class Gui extends javax.swing.JFrame {
     }
     //</editor-fold>
     loadingIndicator = new Loading(loading);
-    jTable1.getSelectionModel().addListSelectionListener(new RowSelectionListener(jTable1, tm, background, obstacleLayer));
+//    jTable1.getSelectionModel().addListSelectionListener(new RowSelectionListener(jTable1, tm, background, obstacleLayer));
     HexGrid.createHexGrid(hexLayer, hexGrid);
     debugBtn.setVisible(false);
     canvas.updateUI();
