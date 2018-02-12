@@ -37,7 +37,11 @@ public class HexGrid {
   }
 
   public void setState(final int x, final int y, final HexCellState state) {
-    grid.put(posToHex(x, y), state);
+    if (0 < x && x < BFIELD_WIDTH) {
+      if (0 <= y && y < BFIELD_HEIGHT) {
+        grid.put(posToHex(x, y), state);
+      }
+    }
   }
 
   public HexCellState getState(final int x, final int y) {

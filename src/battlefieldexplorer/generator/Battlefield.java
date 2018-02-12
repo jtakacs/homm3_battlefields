@@ -3,7 +3,11 @@ package battlefieldexplorer.generator;
 import static battlefieldexplorer.util.Constants.BFIELD_SIZE;
 import static battlefieldexplorer.util.Constants.BFIELD_WIDTH;
 import static battlefieldexplorer.util.HexTools.calcBitMask;
+import static java.math.BigInteger.ONE;
+import static java.math.BigInteger.ZERO;
 import static java.util.Collections.unmodifiableSet;
+import battlefieldexplorer.search.SearchParams;
+import battlefieldexplorer.search.SearchPattern;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -27,19 +31,19 @@ public final class Battlefield {
         area += o.obstacle.cellCount;
         this.obstacles.add(o);
       }
-      Collections.sort(obstacles);
     }
     this.coveredArea = area;
   }
 
-  public final Set<Integer> getBlockedHexes() {
+  public Set<Integer> getBlockedHexes() {
     if (blocked == null) {
-      blocked = new TreeSet<>();
+      final Set<Integer> tmp = new TreeSet<>();
       for (final PositionedObstacle po : obstacles) {
-        blocked.addAll(po.getBlockedCells());
+        tmp.addAll(po.getBlockedCells());
       }
+      blocked = unmodifiableSet(tmp);
     }
-    return unmodifiableSet(blocked);
+    return blocked;
   }
 
   public BigInteger getObstacleMask() {
@@ -49,20 +53,36 @@ public final class Battlefield {
     return obstacleMask;
   }
 
-  public boolean compare(final int size, final BigInteger blocked, final BigInteger empty) {
-    return compare(size, blocked, empty, false);
+  public String getRawMask() {
+    final Set<Integer> blocked = getBlockedHexes();
+    final StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < BFIELD_SIZE; i++) {
+      if (blocked.contains(i)) {
+        sb.append("1");
+      } else {
+        sb.append("0");
+      }
+    }
+    return sb.toString();
   }
 
-  public boolean compare(final int size, final BigInteger blocked, final BigInteger empty, final boolean fixed) {
-    if (coveredArea < size) {
-      return false;
-    }
-    for (int i = 0; i < BFIELD_SIZE - BFIELD_WIDTH; i++) {
-      final BigInteger tmp = getObstacleMask().shiftRight(i);
-      if (tmp.and(blocked).equals(blocked)) {
-        if (tmp.andNot(empty).equals(tmp)) {
+  public boolean compare(final SearchParams p) {
+    if (p.size <= coveredArea) {
+      for (final SearchPattern s : p.patterns) {
+        if (compare(s.getBit1(), s.getBit0(), p.fixed)) {
           return true;
         }
+      }
+    }
+    return false;
+  }
+
+  private boolean compare(final BigInteger blocked, final BigInteger empty, final boolean fixed) {
+    for (int i = 0; i < BFIELD_SIZE - BFIELD_WIDTH; i++) {
+      final BigInteger tmp = getObstacleMask().shiftRight(i);
+      if (tmp.and(blocked).equals(blocked)
+          && tmp.andNot(empty).equals(tmp)) {
+        return true;
       }
       if (fixed) {
         return false;
@@ -74,14 +94,16 @@ public final class Battlefield {
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("Battlefield: ")
-      .append("mapX: ").append(mapX)
-      .append(", mapY: ").append(mapY)
-      .append(", ").append(terrain.name()).append(" [").append(terrain.type).append(",").append(terrain.special ? " S" : "  ")
-      .append("]")
-      .append(System.lineSeparator())
-      .append("obstacles: ");
+            .append("mapX: ").append(mapX)
+            .append(", mapY: ").append(mapY)
+            .append(", ").append(terrain.name())
+            .append(" [")
+            .append(terrain.type).append(",").append(terrain.special ? " S" : "  ")
+            .append("]")
+            .append(System.lineSeparator())
+            .append("obstacles: ");
     obstacles
-      .forEach(po -> sb.append(po).append(System.lineSeparator()));
+            .forEach(po -> sb.append(po).append(System.lineSeparator()));
     return sb.toString();
   }
 

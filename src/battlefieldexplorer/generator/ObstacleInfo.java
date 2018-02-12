@@ -1,5 +1,7 @@
 package battlefieldexplorer.generator;
 
+import static java.lang.Boolean.parseBoolean;
+import static java.lang.Integer.parseInt;
 import battlefieldexplorer.util.CSVReader;
 import java.util.*;
 
@@ -17,51 +19,48 @@ public final class ObstacleInfo {
     return ObstacleLoader.INSTANCE;
   }
 
-  public final List<Obstacle> absolute = new LinkedList<>();
-  public final List<Obstacle> usual = new LinkedList<>();
+  private final Map<Integer, Obstacle> absolute = new TreeMap<>();
+  private final Map<Integer, Obstacle> usual = new TreeMap<>();
 
-  public ObstacleInfo() {
-    new ObstacleReader()
-      .read("obstacles.csv", o -> {
-            if (o.absolute) {
-              absolute.add(o);
-            } else {
-              usual.add(o);
-            }
-          });
+  private ObstacleInfo() {
+    new ObstacleReader("obstacles.csv")
+            .read(this::store);
+  }
+
+  private void store(final Obstacle o) {
+    if (o.absolute) {
+      absolute.put(o.ID, o);
+    } else {
+      usual.put(o.ID, o);
+    }
+  }
+
+  public Obstacle get(final boolean absolute, final int id) {
+    if (absolute) {
+      return this.absolute.get(id);
+    }
+    return usual.get(id);
   }
 
   private static class ObstacleReader extends CSVReader<Obstacle> {
 
-    ObstacleReader() {
+    ObstacleReader(final String filename) {
+      super(filename);
     }
 
     @Override
     public Obstacle parseLine(final String line) {
       final String[] split = line.split(";");
-      final int ID = Integer.parseInt(split[0], 10);
-      final boolean absolute = Boolean.parseBoolean(split[1]);
-      final int battlefields = Integer.parseInt(split[2], 16);
-      final int screenX = Integer.parseInt(split[3], 10);
-      final int screenY = Integer.parseInt(split[4], 10);
-      final int width = Integer.parseInt(split[5], 10);
-      final int height = Integer.parseInt(split[6], 10);
-      final String image = split[7];
-      final List<Integer> cells = new ArrayList<>();
-      for (final String s : split[8].split(",")) {
-        cells.add(Integer.parseInt(s, 10));
-      }
       return Obstacle
-        .obstacleID(ID)
-        .absolute(absolute)
-        .battlefields(battlefields)
-        .specialbattlefields(0)
-        .cells(cells)
-        .posX(screenX)
-        .posY(screenY)
-        .width(width)
-        .height(height)
-        .image(image);
+              .obstacleID(parseInt(split[0]))
+              .absolute(parseBoolean(split[1]))
+              .battlefields(parseInt(split[2], 16))
+              .posX(parseInt(split[3]))
+              .posY(parseInt(split[4]))
+              .width(parseInt(split[5]))
+              .height(parseInt(split[6]))
+              .image(split[7])
+              .cells(toNumberList(split[8], ",", Integer::parseInt));
     }
   }
 

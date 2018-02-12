@@ -10,9 +10,9 @@ public class RowSelectionListener implements ListSelectionListener {
 
   private final JTable jTable1;
   private final ResultTableModel tm;
-  private final Gui2 frame;
+  private final Gui frame;
 
-  public RowSelectionListener(final JTable jTable1, final ResultTableModel tm, final Gui2 frame) {
+  public RowSelectionListener(final JTable jTable1, final ResultTableModel tm, final Gui frame) {
     this.jTable1 = jTable1;
     this.tm = tm;
     this.frame = frame;

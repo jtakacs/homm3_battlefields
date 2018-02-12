@@ -1,455 +1,1279 @@
 package battlefieldexplorer.gui;
 
+import static battlefieldexplorer.util.Constants.BFIELD_HEIGHT;
+import static battlefieldexplorer.util.Constants.BFIELD_WIDTH;
+import static battlefieldexplorer.util.Constants.MAP_SIZE;
+import static battlefieldexplorer.util.HexTools.hexIsValid;
+import static battlefieldexplorer.util.HexTools.hexIsVisible;
+import static battlefieldexplorer.util.HexTools.isOddRow;
+import static battlefieldexplorer.util.HexTools.posToHex;
+import static javax.swing.SwingConstants.LEFT;
+import static javax.swing.SwingConstants.TOP;
 import static javax.swing.SwingUtilities.invokeLater;
 import static javax.swing.UIManager.getInstalledLookAndFeels;
 import static javax.swing.UIManager.setLookAndFeel;
 import battlefieldexplorer.generator.*;
 import battlefieldexplorer.search.*;
+import battlefieldexplorer.util.HexCellState;
+import battlefieldexplorer.util.HexTools;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import javax.imageio.ImageIO;
+import java.awt.event.*;
+import java.util.*;
 import javax.swing.*;
+import javax.swing.GroupLayout.Alignment;
+import javax.swing.JSpinner.NumberEditor;
+import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.border.LineBorder;
+import javax.swing.event.*;
 import org.oxbow.swingbits.table.filter.TableRowFilterSupport;
 
-public final class Gui extends javax.swing.JFrame {
+//TODO cleanup
+public class Gui extends JFrame {
 
   private static final long serialVersionUID = 1L;
+  private final FakeCursor fakeCursor;
+  private final SpinnerIntModel mapX = new SpinnerIntModel(3, 0, MAP_SIZE - 1);
+  private final SpinnerIntModel mapY = new SpinnerIntModel(0, 0, MAP_SIZE - 1);
   private final HexGrid hexGrid;
   private final ResultTableModel tm = new ResultTableModel();
-  private final Loading loadingIndicator;
+  private final Loading loading;
+  private final Gui rootFrame;
+  private final ImageIcon rightBallista;
+  private final ImageIcon rightAmmocart;
+  private final ImageIcon rightFirstaid;
+  private final ImageIcon rightBallistaD;
+  private final ImageIcon rightAmmocartD;
+  private final ImageIcon rightFirstaidD;
+  private Rectangle area = new Rectangle(-1, -1, -1, -1);
+  private boolean showFirstaidL = false;
+  private boolean showCatapultL = false;
+  private boolean showBallistaL = false;
+  private boolean showAmmocartL = false;
+  private boolean showFirstaidR = false;
+  private boolean showBallistaR = false;
+  private boolean showAmmocartR = false;
 
   public Gui() {
-    this.hexGrid = new HexGrid();
-    setEnabled(false);
+    rootFrame = this;
+    fakeCursor = new FakeCursor(this);
+    rightBallista = new MirrorIcon(Gui.class.getResource("/warmachines/ballista.png"));
+    rightAmmocart = new MirrorIcon(Gui.class.getResource("/warmachines/ammocart.png"));
+    rightFirstaid = new MirrorIcon(Gui.class.getResource("/warmachines/firstaid.png"));
+    rightBallistaD = new MirrorIcon(GrayFilter.createDisabledImage(rightBallista.getImage()));
+    rightAmmocartD = new MirrorIcon(GrayFilter.createDisabledImage(rightAmmocart.getImage()));
+    rightFirstaidD = new MirrorIcon(GrayFilter.createDisabledImage(rightFirstaid.getImage()));
     initComponents();
-    //<editor-fold defaultstate="collapsed" desc="set cursor">
-    try {
-      setIconImage(ImageIO.read(Gui.class.getResource("/Heroes_III_Icon.png")));
-      final BufferedImage cursorImage = ImageIO.read(Gui.class.getResource("/cursor/cursors_205.png"));
-      final Cursor cursor = Toolkit
-        .getDefaultToolkit()
-        .createCustomCursor(cursorImage, new Point(0, 0), "CustomCursor");
-      getRootPane().setCursor(cursor);
-      setCursor(cursor);
-    } catch (IOException ex) {
-    }
-    //</editor-fold>
-    loadingIndicator = new Loading(loading);
-//    jTable1.getSelectionModel().addListSelectionListener(new RowSelectionListener(jTable1, tm, background, obstacleLayer));
+    this.setIconImage(Toolkit.getDefaultToolkit().getImage(Gui.class.getResource("/Heroes_III_Icon.png")));
+    Arrays.asList(
+            ammocartL,
+            ammocartR,
+            ballistaL,
+            ballistaR,
+            catapultL,
+            firstaidL,
+            firstaidR,
+            anchorLayer
+    ).forEach(L -> L.setVisible(false));
+    setLocationRelativeTo(null);
+    setEnabled(false);
+    loading = new Loading(loadingIndicator);
+    loading.start();
+    this.hexGrid = new HexGrid();
+    jTable1.getSelectionModel().addListSelectionListener(new RowSelectionListener(jTable1, tm, rootFrame));
     HexGrid.createHexGrid(hexLayer, hexGrid);
-    debugBtn.setVisible(false);
-    canvas.updateUI();
-    loadingIndicator.start();
     TableRowFilterSupport
-      .forTable(jTable1)
-      .actions(true)
-      .searchable(true)
-      .apply();
-    final JFrame parent = this;
+            .forTable(jTable1)
+            .actions(true)
+            .searchable(true)
+            .apply();
+    KeyboardFocusManager.getCurrentKeyboardFocusManager()
+            .addKeyEventDispatcher(e -> {
+              if (KeyEvent.KEY_RELEASED == e.getID()) {
+                return keyNavigation(e);
+              }
+              return false;
+            });
     new Thread(() -> {
       BattleFieldInfo.load();
       invokeLater(() -> {
-        loadingIndicator.stop();
-        parent.setEnabled(true);
+        loading.stop();
+        rootFrame.setEnabled(true);
       });
     }).start();
   }
 
-  @SuppressWarnings("unchecked")
-  // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-  private void initComponents() {
+  public void loadBattleField() {
+    TerrainInfo.instance()
+            .get(terrainList.getSelectedIndex())
+            .ifPresent(terrain -> displayBattlefield(
+            BattleFieldInfo.load().get(mapX.value(), mapY.value(), terrain))
+            );
+  }
 
-    results = new javax.swing.JScrollPane();
-    jTable1 = new javax.swing.JTable();
-    controls = new javax.swing.JPanel();
-    showgrid = new javax.swing.JCheckBox();
-    jButton2 = new javax.swing.JButton();
-    showObst = new javax.swing.JCheckBox();
-    cursorNavigation = new javax.swing.JToggleButton();
-    jScrollPane1 = new javax.swing.JScrollPane();
-    jList1 = new javax.swing.JList<>();
-    jLabel2 = new javax.swing.JLabel();
-    jLabel3 = new javax.swing.JLabel();
-    resultLabel = new javax.swing.JLabel();
-    xSpinner = new javax.swing.JSpinner();
-    ySpinner = new javax.swing.JSpinner();
-    jButton1 = new javax.swing.JButton();
-    debugBtn = new javax.swing.JButton();
-    canvas = new javax.swing.JLayeredPane();
-    backgroundLayer = new javax.swing.JPanel();
-    background = new javax.swing.JLabel();
-    hexLayer = new javax.swing.JPanel();
-    obstacleLayer = new javax.swing.JPanel();
-    loading = new javax.swing.JPanel();
-
-    setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-    setTitle("Battlefield Explorer");
-    setMinimumSize(new java.awt.Dimension(1020, 750));
-    setName("Battlefield Explorer"); // NOI18N
-
-    results.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    results.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-    results.setDoubleBuffered(true);
-    results.setHorizontalScrollBar(null);
-    results.setMaximumSize(new java.awt.Dimension(800, 200));
-    results.setMinimumSize(new java.awt.Dimension(800, 200));
-    results.setPreferredSize(new java.awt.Dimension(800, 200));
-
-    jTable1.setAutoCreateRowSorter(true);
-    jTable1.setModel(tm);
-    jTable1.setDoubleBuffered(true);
-    jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-    results.setViewportView(jTable1);
-
-    getContentPane().add(results, java.awt.BorderLayout.SOUTH);
-
-    controls.setMaximumSize(new java.awt.Dimension(500, 2000));
-    controls.setMinimumSize(new java.awt.Dimension(200, 556));
-    controls.setPreferredSize(new java.awt.Dimension(200, 556));
-
-    showgrid.setSelected(true);
-    showgrid.setText("Show grid");
-    showgrid.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        showgridActionPerformed(evt);
-      }
+  public void displayBattlefield(final Battlefield bf) {
+    invokeLater(() -> {
+      background.setIcon(TerrainImages.getImage(bf.terrain));
+      background.updateUI();
+      placeObstacles(bf.obstacles);
+      setPassability(bf.getBlockedHexes());
+      setAnchors(bf.obstacles);
     });
+  }
 
-    jButton2.setText("Clear grid");
-    jButton2.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        jButton2ActionPerformed(evt);
-      }
-    });
+  private void placeObstacles(java.util.List<PositionedObstacle> obstacles) {
+    obstacleLayer.removeAll();
+    Collections.sort(obstacles);
+    for (final PositionedObstacle po : obstacles) {
+      final ImageIcon im = po.obstacle.getImage();
+      final JLabel L = new JLabel(im);
+      L.setVerticalAlignment(TOP);
+      L.setHorizontalAlignment(LEFT);
+      obstacleLayer.add(L);
+      L.setBounds(po.getScreenX(), po.getScreenY(), im.getIconWidth(), im.getIconHeight());
+    }
+    obstacleLayer.updateUI();
+  }
 
-    showObst.setSelected(true);
-    showObst.setText("Show obstacles");
-    showObst.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        showObstActionPerformed(evt);
-      }
-    });
+  private void setPassability(java.util.Set<Integer> obstacles) {
+    Passability.createOverlay(passabilityLayer, obstacles);
+  }
 
-    cursorNavigation.setText("Cursor navigation");
-    cursorNavigation.setToolTipText("<html><b>Cursors:</b> change map coordinates<br/>\n<b>PageUp, PageDown:</b> change terrain<br/>\n<b>O:</b> toggle obstacle view<br/>\n<b>H:</b> toggle hex grid<br/>");
-    cursorNavigation.addFocusListener(new java.awt.event.FocusAdapter() {
-      public void focusLost(java.awt.event.FocusEvent evt) {
-        cursorNavigationFocusLost(evt);
-      }
-    });
-    cursorNavigation.addKeyListener(new java.awt.event.KeyAdapter() {
-      public void keyReleased(java.awt.event.KeyEvent evt) {
-        cursorNavigationKeyReleased(evt);
-      }
-    });
+  private void setAnchors(java.util.List<PositionedObstacle> obstacles) {
+    AnchorCells.createOverlay(anchorLayer, obstacles);
+  }
 
-    jList1.setModel(TerrainInfo.instance());
-    jList1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-    jList1.setDoubleBuffered(true);
-    jList1.setMaximumSize(new java.awt.Dimension(1000, 1000));
-    jList1.setMinimumSize(new java.awt.Dimension(200, 300));
-    jList1.setPreferredSize(new java.awt.Dimension(200, 300));
-    jList1.setSelectedIndex(0);
-    jList1.setVisibleRowCount(20);
-    jList1.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
-      public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-        jList1ValueChanged(evt);
-      }
-    });
-    jScrollPane1.setViewportView(jList1);
+  public void setControlState(final Battlefield bf) {
+    xSpinner.setValue(bf.mapX);
+    ySpinner.setValue(bf.mapY);
+    terrainList.getSelectionModel().setSelectionInterval(0, bf.terrain.ID);
+    xSpinner.updateUI();
+    ySpinner.updateUI();
+    terrainList.updateUI();
+  }
 
-    jLabel2.setText("X:");
-
-    jLabel3.setText("Y: ");
-
-    resultLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-    resultLabel.setText(" ");
-    resultLabel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-    resultLabel.setDoubleBuffered(true);
-    resultLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-    resultLabel.setMaximumSize(new java.awt.Dimension(200, 20));
-    resultLabel.setMinimumSize(new java.awt.Dimension(200, 20));
-    resultLabel.setPreferredSize(new java.awt.Dimension(200, 20));
-
-    xSpinner.setModel(new javax.swing.SpinnerNumberModel(3, 0, 143, 1));
-    xSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-      public void stateChanged(javax.swing.event.ChangeEvent evt) {
-        xSpinnerStateChanged(evt);
-      }
-    });
-
-    ySpinner.setModel(new javax.swing.SpinnerNumberModel(0, 0, 143, 1));
-    ySpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-      public void stateChanged(javax.swing.event.ChangeEvent evt) {
-        ySpinnerStateChanged(evt);
-      }
-    });
-
-    jButton1.setText("search");
-    jButton1.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        jButton1ActionPerformed(evt);
-      }
-    });
-
-    debugBtn.setText("debug");
-    debugBtn.addActionListener(new java.awt.event.ActionListener() {
-      public void actionPerformed(java.awt.event.ActionEvent evt) {
-        debugBtnActionPerformed(evt);
-      }
-    });
-
-    javax.swing.GroupLayout controlsLayout = new javax.swing.GroupLayout(controls);
-    controls.setLayout(controlsLayout);
-    controlsLayout.setHorizontalGroup(
-      controlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGroup(controlsLayout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(controlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-          .addGroup(controlsLayout.createSequentialGroup()
-            .addComponent(showgrid)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jButton2))
-          .addComponent(showObst)
-          .addGroup(controlsLayout.createSequentialGroup()
-            .addComponent(jLabel2)
-            .addGap(4, 4, 4)
-            .addComponent(xSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jLabel3)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(ySpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-          .addComponent(cursorNavigation)
-          .addGroup(controlsLayout.createSequentialGroup()
-            .addComponent(jButton1)
-            .addGap(18, 18, 18)
-            .addComponent(debugBtn))
-          .addComponent(resultLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 351, javax.swing.GroupLayout.PREFERRED_SIZE)
-          .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        .addContainerGap(146, Short.MAX_VALUE))
-    );
-    controlsLayout.setVerticalGroup(
-      controlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addGroup(controlsLayout.createSequentialGroup()
-        .addContainerGap()
-        .addGroup(controlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-          .addComponent(showgrid)
-          .addComponent(jButton2))
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-        .addComponent(showObst)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-        .addComponent(cursorNavigation)
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-        .addGroup(controlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-          .addComponent(jLabel2)
-          .addComponent(xSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-          .addComponent(jLabel3)
-          .addComponent(ySpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-        .addGroup(controlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-          .addComponent(jButton1)
-          .addComponent(debugBtn))
-        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-        .addComponent(resultLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        .addContainerGap(70, Short.MAX_VALUE))
-    );
-
-    getContentPane().add(controls, java.awt.BorderLayout.EAST);
-
-    canvas.setDoubleBuffered(true);
-    canvas.setMaximumSize(new java.awt.Dimension(800, 556));
-    canvas.setMinimumSize(new java.awt.Dimension(800, 556));
-    canvas.setLayout(new javax.swing.OverlayLayout(canvas));
-
-    backgroundLayer.setMaximumSize(new java.awt.Dimension(800, 600));
-    backgroundLayer.setMinimumSize(new java.awt.Dimension(800, 556));
-    backgroundLayer.setLayout(new java.awt.BorderLayout());
-
-    background.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-    background.setIcon(new javax.swing.ImageIcon(getClass().getResource("/battlefields/CmBkBoat.png"))); // NOI18N
-    background.setDoubleBuffered(true);
-    background.setFocusable(false);
-    background.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-    background.setIconTextGap(0);
-    background.setRequestFocusEnabled(false);
-    backgroundLayer.add(background, java.awt.BorderLayout.CENTER);
-
-    canvas.setLayer(backgroundLayer, 1);
-    canvas.add(backgroundLayer);
-
-    hexLayer.setBackground(new java.awt.Color(238, 238, 255));
-    hexLayer.setMaximumSize(new java.awt.Dimension(800, 556));
-    hexLayer.setMinimumSize(new java.awt.Dimension(800, 556));
-    hexLayer.setOpaque(false);
-    hexLayer.setVerifyInputWhenFocusTarget(false);
-    hexLayer.setLayout(null);
-    canvas.setLayer(hexLayer, 4);
-    canvas.add(hexLayer);
-
-    obstacleLayer.setMaximumSize(new java.awt.Dimension(800, 556));
-    obstacleLayer.setMinimumSize(new java.awt.Dimension(800, 556));
-    obstacleLayer.setOpaque(false);
-    obstacleLayer.setPreferredSize(new java.awt.Dimension(800, 556));
-    obstacleLayer.setLayout(null);
-    canvas.setLayer(obstacleLayer, 6);
-    canvas.add(obstacleLayer);
-
-    loading.setFocusable(false);
-    loading.setMaximumSize(new java.awt.Dimension(800, 556));
-    loading.setMinimumSize(new java.awt.Dimension(800, 556));
-    loading.setOpaque(false);
-    loading.setRequestFocusEnabled(false);
-    loading.setVerifyInputWhenFocusTarget(false);
-    loading.setLayout(null);
-    canvas.setLayer(loading, 50);
-    canvas.add(loading);
-
-    getContentPane().add(canvas, java.awt.BorderLayout.CENTER);
-
-    pack();
-  }// </editor-fold>//GEN-END:initComponents
-
-  private void debugBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_debugBtnActionPerformed
-    final SearchParams param = SearchParams.from(hexGrid, false);
-    System.out.println("PATTERN: " + param.bit1.toString(2));
-    System.out.println("MASK   : " + param.bit0.toString(2));
-  }//GEN-LAST:event_debugBtnActionPerformed
-
-  private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-    loadingIndicator.start();
-    new Thread(() -> {
-      java.util.List<Battlefield> result = Search.search(hexGrid, false);
-      tm.addAll(result);
-      invokeLater(() -> {
-        resultLabel.setText("" + result.size() + " matches");
-        resultLabel.updateUI();
-        jTable1.updateUI();
-        loadingIndicator.stop();
-      });
-    }).start();
-  }//GEN-LAST:event_jButton1ActionPerformed
-
-  private void ySpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_ySpinnerStateChanged
-    loadBattlefield();
-  }//GEN-LAST:event_ySpinnerStateChanged
-
-  private void xSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_xSpinnerStateChanged
-    loadBattlefield();
-  }//GEN-LAST:event_xSpinnerStateChanged
-
-  private void jList1ValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jList1ValueChanged
-    loadBattlefield();
-  }//GEN-LAST:event_jList1ValueChanged
-
-  private void cursorNavigationKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_cursorNavigationKeyReleased
-    keyNavigation(evt);
-  }//GEN-LAST:event_cursorNavigationKeyReleased
-
-  private void cursorNavigationFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_cursorNavigationFocusLost
-    cursorNavigation.setSelected(false);
-  }//GEN-LAST:event_cursorNavigationFocusLost
-
-  private void showObstActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showObstActionPerformed
-    obstacleLayer.setVisible(!obstacleLayer.isVisible());
-  }//GEN-LAST:event_showObstActionPerformed
-
-  private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+  private void clearHexGrid() {
     hexGrid.clear();
+    updateHexGrid();
+  }
+
+  private void updateHexGrid() {
     hexLayer.updateUI();
     for (Component c : hexLayer.getComponents()) {
       if (c instanceof JComponent) {
         ((JComponent) c).updateUI();
       }
     }
-  }//GEN-LAST:event_jButton2ActionPerformed
+  }
 
-  private void showgridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showgridActionPerformed
-    hexLayer.setVisible(showgrid.isSelected());
-  }//GEN-LAST:event_showgridActionPerformed
-
-  public void loadBattlefield() {
-    int x = Integer.parseInt(xSpinner.getValue().toString());
-    int y = Integer.parseInt(ySpinner.getValue().toString());
-    Terrain.get(jList1.getSelectedIndex()).ifPresent(t -> {
-      final Battlefield d = BattleFieldInfo.load().get(x, y, t);
-//      System.out.println(d.toString());
-//      hexdump(d.getBlockedHexes());
-      background.updateUI();
-      obstacleLayer.removeAll();
-      background.setIcon(TerrainImages.getImage(d.terrain));
-      for (final PositionedObstacle po : d.obstacles) {
-        final ImageIcon im = po.obstacle.getImage();
-        final JLabel L = new JLabel(im);
-        obstacleLayer.add(L);
-        L.setBounds(po.getScreenX(), po.getScreenY(), im.getIconWidth(), im.getIconHeight());
+  private void changeTerrainListSelection(final int dir) {
+    if (dir == 1 || dir == -1) {
+      final int s = dir + terrainList.getSelectedIndex();
+      if (s >= 0 && s < Terrain.values().length) {
+        terrainList.getSelectionModel().setSelectionInterval(0, s);
       }
-      background.updateUI();
-      obstacleLayer.updateUI();
+    }
+  }
+
+  public void terrainCursor(MouseEvent evt) {
+    final MouseEvent e = SwingUtilities.convertMouseEvent(evt.getComponent(), evt, terrainList);
+    final int idx = terrainList.locationToIndex(new Point(e.getX(), e.getY()));
+    Terrain.get(idx).ifPresent(terrain -> {
+      if (Terrain.SHIP.equals(terrain)) {
+        fakeCursor.setImg(2);
+      } else {
+        fakeCursor.setImg(1);
+      }
     });
   }
 
-  private void keyNavigation(final KeyEvent evt) {
-    if (cursorNavigation.isSelected()) {
-      //<editor-fold defaultstate="collapsed" desc="keyNavigation">
-      switch (evt.getKeyCode()) {
-        case KeyEvent.VK_O: {
-          showObst.setSelected(!showObst.isSelected());
-          showObst.doClick();
-        }
-        break;
-        case KeyEvent.VK_H: {
-          showgrid.setSelected(!showgrid.isSelected());
-          showgrid.doClick();
-        }
-        break;
-        case KeyEvent.VK_PAGE_UP: {
-          final int s = jList1.getSelectedIndex();
-          if (s > 0) {
-            jList1.getSelectionModel().setSelectionInterval(s - 1, s - 1);
-          }
-        }
-        break;
-        case KeyEvent.VK_PAGE_DOWN: {
-          final int s = jList1.getSelectedIndex();
-          if (s < Terrain.values().length - 1) {
-            jList1.getSelectionModel().setSelectionInterval(s + 1, s + 1);
-          }
-        }
-        break;
-        case KeyEvent.VK_UP: {
-          if (ySpinner.getPreviousValue() != null) {
-            ySpinner.setValue(ySpinner.getPreviousValue());
-          }
-        }
-        break;
-        case KeyEvent.VK_DOWN: {
-          if (ySpinner.getNextValue() != null) {
-            ySpinner.setValue(ySpinner.getNextValue());
-          }
-        }
-        break;
-        case KeyEvent.VK_LEFT: {
-          if (xSpinner.getPreviousValue() != null) {
-            xSpinner.setValue(xSpinner.getPreviousValue());
-          }
-        }
-        break;
-        case KeyEvent.VK_RIGHT: {
-          if (xSpinner.getNextValue() != null) {
-            xSpinner.setValue(xSpinner.getNextValue());
-          }
-        }
-        break;
-        default:
+  @SuppressWarnings ("unchecked")
+  // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+  private void initComponents() {
+
+    jPanel1 = new JPanel();
+    jScrollPane1 = new JScrollPane();
+    terrainList = new JList<>();
+    jLabel1 = new JLabel();
+    xSpinner = new JSpinner();
+    jLabel2 = new JLabel();
+    ySpinner = new JSpinner();
+    showHex = new JCheckBox();
+    showObst = new JCheckBox();
+    showBlocked = new JCheckBox();
+    showWarmachines = new JCheckBox();
+    showAnchorCells = new JCheckBox();
+    jLayeredPane1 = new JLayeredPane();
+    backgroundLayer = new JPanel();
+    background = new JLabel();
+    hexLayer = new JPanel();
+    obstacleLayer = new JPanel();
+    passabilityLayer = new JPanel();
+    anchorLayer = new JPanel();
+    warmachines = new JPanel();
+    faLselector = new JPanel();
+    catLselector = new JPanel();
+    balLselector = new JPanel();
+    amLselector = new JPanel();
+    faRselector = new JPanel();
+    amRselector = new JPanel();
+    balRselector = new JPanel();
+    ammocartL = new JLabel();
+    firstaidL = new JLabel();
+    catapultL = new JLabel();
+    ballistaL = new JLabel();
+    ammocartR = new JLabel();
+    ballistaR = new JLabel();
+    firstaidR = new JLabel();
+    loadingIndicator = new JPanel();
+    tablePanel = new JScrollPane();
+    jTable1 = new JTable();
+    helpTextPanel = new JScrollPane();
+    jTextPane1 = new JTextPane();
+    jPanel2 = new JPanel();
+    flipVbtn = new JButton();
+    flipHbtn = new JButton();
+    searchMirrorV = new JCheckBox();
+    searchMirrorH = new JCheckBox();
+    fixedShape = new JCheckBox();
+    searchButton = new JButton();
+    clearButton = new JButton();
+    resultsLabel = new JLabel();
+    selectAreaBtn = new JButton();
+
+    setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+    setTitle("BattleField Explorer");
+    setMinimumSize(new Dimension(820, 600));
+
+    jPanel1.setBorder(new LineBorder(new Color(0, 0, 0), 1, true));
+    jPanel1.setInheritsPopupMenu(true);
+    jPanel1.setMaximumSize(new Dimension(220, 556));
+    jPanel1.setMinimumSize(new Dimension(220, 556));
+    jPanel1.setPreferredSize(new Dimension(220, 556));
+
+    terrainList.setModel(TerrainInfo.instance());
+    terrainList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    terrainList.setDoubleBuffered(true);
+    terrainList.setMaximumSize(new Dimension(150, 85));
+    terrainList.setMinimumSize(new Dimension(150, 85));
+    terrainList.setPreferredSize(new Dimension(150, 85));
+    terrainList.setRequestFocusEnabled(false);
+    terrainList.setSelectedIndex(0);
+    terrainList.setVisibleRowCount(19);
+    terrainList.addMouseMotionListener(new MouseMotionAdapter() {
+      public void mouseMoved(MouseEvent evt) {
+        terrainListMouseMoved(evt);
       }
-      //</editor-fold>
+    });
+    terrainList.addMouseListener(new MouseAdapter() {
+      public void mouseExited(MouseEvent evt) {
+        terrainListMouseExited(evt);
+      }
+    });
+    terrainList.addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent evt) {
+        terrainListValueChanged(evt);
+      }
+    });
+    jScrollPane1.setViewportView(terrainList);
+
+    jLabel1.setText("X: ");
+
+    xSpinner.setModel(mapX);
+    xSpinner.setEditor(new NumberEditor(xSpinner, ""));
+    xSpinner.setMaximumSize(new Dimension(56, 20));
+    xSpinner.setRequestFocusEnabled(false);
+    xSpinner.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent evt) {
+        xSpinnerStateChanged(evt);
+      }
+    });
+
+    jLabel2.setText("Y: ");
+
+    ySpinner.setModel(mapY);
+    ySpinner.setEditor(new NumberEditor(ySpinner, ""));
+    ySpinner.setMaximumSize(new Dimension(56, 20));
+    ySpinner.setRequestFocusEnabled(false);
+    ySpinner.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent evt) {
+        ySpinnerStateChanged(evt);
+      }
+    });
+
+    showHex.setSelected(true);
+    showHex.setText("Show hex grid");
+    showHex.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent evt) {
+        showHexStateChanged(evt);
+      }
+    });
+
+    showObst.setSelected(true);
+    showObst.setText("Show obstacles");
+    showObst.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent evt) {
+        showObstStateChanged(evt);
+      }
+    });
+
+    showBlocked.setSelected(true);
+    showBlocked.setText("Passability");
+    showBlocked.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent evt) {
+        showBlockedStateChanged(evt);
+      }
+    });
+
+    showWarmachines.setText("War machines");
+    showWarmachines.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent evt) {
+        showWarmachinesActionPerformed(evt);
+      }
+    });
+
+    showAnchorCells.setText("Show anchor cells");
+    showAnchorCells.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent evt) {
+        showAnchorCellsStateChanged(evt);
+      }
+    });
+
+    GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
+    jPanel1.setLayout(jPanel1Layout);
+    jPanel1Layout.setHorizontalGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING)
+      .addGroup(jPanel1Layout.createSequentialGroup()
+        .addContainerGap()
+        .addGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING)
+          .addComponent(showAnchorCells)
+          .addComponent(showWarmachines)
+          .addComponent(showBlocked)
+          .addComponent(showObst)
+          .addGroup(jPanel1Layout.createSequentialGroup()
+            .addComponent(jLabel1)
+            .addPreferredGap(ComponentPlacement.RELATED)
+            .addComponent(xSpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(ComponentPlacement.UNRELATED)
+            .addComponent(jLabel2)
+            .addGap(6, 6, 6)
+            .addComponent(ySpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+          .addComponent(showHex)
+          .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 192, GroupLayout.PREFERRED_SIZE))
+        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
+    jPanel1Layout.setVerticalGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING)
+      .addGroup(jPanel1Layout.createSequentialGroup()
+        .addContainerGap()
+        .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+        .addPreferredGap(ComponentPlacement.RELATED)
+        .addGroup(jPanel1Layout.createParallelGroup(Alignment.BASELINE)
+          .addComponent(jLabel1)
+          .addComponent(xSpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+          .addComponent(jLabel2)
+          .addComponent(ySpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(ComponentPlacement.UNRELATED)
+        .addComponent(showHex)
+        .addPreferredGap(ComponentPlacement.RELATED)
+        .addComponent(showObst)
+        .addPreferredGap(ComponentPlacement.RELATED)
+        .addComponent(showBlocked)
+        .addPreferredGap(ComponentPlacement.UNRELATED)
+        .addComponent(showWarmachines)
+        .addPreferredGap(ComponentPlacement.UNRELATED)
+        .addComponent(showAnchorCells)
+        .addContainerGap(78, Short.MAX_VALUE))
+    );
+
+    jLayeredPane1.setBorder(new LineBorder(new Color(0, 0, 0), 1, true));
+    jLayeredPane1.setDoubleBuffered(true);
+    jLayeredPane1.setMaximumSize(new Dimension(800, 556));
+    jLayeredPane1.setMinimumSize(new Dimension(800, 556));
+    jLayeredPane1.setLayout(new OverlayLayout(jLayeredPane1));
+
+    backgroundLayer.setMaximumSize(new Dimension(800, 556));
+    backgroundLayer.setMinimumSize(new Dimension(800, 556));
+    backgroundLayer.setOpaque(false);
+    backgroundLayer.setPreferredSize(new Dimension(800, 556));
+    backgroundLayer.setLayout(new BorderLayout());
+
+    background.setHorizontalAlignment(SwingConstants.CENTER);
+    background.setIcon(new ImageIcon(getClass().getResource("/battlefields/CmBkBoat.png"))); // NOI18N
+    background.setDoubleBuffered(true);
+    background.setHorizontalTextPosition(SwingConstants.CENTER);
+    backgroundLayer.add(background, BorderLayout.CENTER);
+
+    jLayeredPane1.setLayer(backgroundLayer, 10);
+    jLayeredPane1.add(backgroundLayer);
+
+    hexLayer.setMaximumSize(new Dimension(800, 556));
+    hexLayer.setMinimumSize(new Dimension(800, 556));
+    hexLayer.setOpaque(false);
+    hexLayer.setLayout(null);
+    jLayeredPane1.setLayer(hexLayer, 20);
+    jLayeredPane1.add(hexLayer);
+
+    obstacleLayer.setMaximumSize(new Dimension(800, 556));
+    obstacleLayer.setMinimumSize(new Dimension(800, 556));
+    obstacleLayer.setOpaque(false);
+    obstacleLayer.setPreferredSize(new Dimension(800, 556));
+    obstacleLayer.setLayout(null);
+    jLayeredPane1.setLayer(obstacleLayer, 30);
+    jLayeredPane1.add(obstacleLayer);
+
+    passabilityLayer.setMaximumSize(new Dimension(800, 556));
+    passabilityLayer.setMinimumSize(new Dimension(800, 556));
+    passabilityLayer.setOpaque(false);
+    passabilityLayer.setLayout(null);
+    jLayeredPane1.setLayer(passabilityLayer, 40);
+    jLayeredPane1.add(passabilityLayer);
+
+    anchorLayer.setMaximumSize(new Dimension(800, 556));
+    anchorLayer.setMinimumSize(new Dimension(800, 556));
+    anchorLayer.setOpaque(false);
+    anchorLayer.setLayout(null);
+    jLayeredPane1.setLayer(anchorLayer, 45);
+    jLayeredPane1.add(anchorLayer);
+
+    warmachines.setFocusable(false);
+    warmachines.setMaximumSize(new Dimension(800, 556));
+    warmachines.setMinimumSize(new Dimension(800, 556));
+    warmachines.setOpaque(false);
+    warmachines.setRequestFocusEnabled(false);
+    warmachines.setVerifyInputWhenFocusTarget(false);
+    warmachines.setLayout(null);
+
+    faLselector.setMaximumSize(new Dimension(50, 52));
+    faLselector.setMinimumSize(new Dimension(50, 52));
+    faLselector.setOpaque(false);
+    faLselector.setPreferredSize(new Dimension(50, 52));
+    faLselector.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent evt) {
+        faLselectorMouseClicked(evt);
+      }
+      public void mouseExited(MouseEvent evt) {
+        faLselectorMouseExited(evt);
+      }
+      public void mouseEntered(MouseEvent evt) {
+        faLselectorMouseEntered(evt);
+      }
+    });
+
+    GroupLayout faLselectorLayout = new GroupLayout(faLselector);
+    faLselector.setLayout(faLselectorLayout);
+    faLselectorLayout.setHorizontalGroup(faLselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 80, Short.MAX_VALUE)
+    );
+    faLselectorLayout.setVerticalGroup(faLselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 80, Short.MAX_VALUE)
+    );
+
+    warmachines.add(faLselector);
+    faLselector.setBounds(0, 435, 80, 80);
+
+    catLselector.setMaximumSize(new Dimension(50, 52));
+    catLselector.setMinimumSize(new Dimension(50, 52));
+    catLselector.setOpaque(false);
+    catLselector.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent evt) {
+        catLselectorMouseClicked(evt);
+      }
+      public void mouseExited(MouseEvent evt) {
+        catLselectorMouseExited(evt);
+      }
+      public void mouseEntered(MouseEvent evt) {
+        catLselectorMouseEntered(evt);
+      }
+    });
+
+    GroupLayout catLselectorLayout = new GroupLayout(catLselector);
+    catLselector.setLayout(catLselectorLayout);
+    catLselectorLayout.setHorizontalGroup(catLselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 80, Short.MAX_VALUE)
+    );
+    catLselectorLayout.setVerticalGroup(catLselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 70, Short.MAX_VALUE)
+    );
+
+    warmachines.add(catLselector);
+    catLselector.setBounds(0, 350, 80, 70);
+
+    balLselector.setMaximumSize(new Dimension(50, 52));
+    balLselector.setMinimumSize(new Dimension(50, 52));
+    balLselector.setOpaque(false);
+    balLselector.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent evt) {
+        balLselectorMouseClicked(evt);
+      }
+      public void mouseExited(MouseEvent evt) {
+        balLselectorMouseExited(evt);
+      }
+      public void mouseEntered(MouseEvent evt) {
+        balLselectorMouseEntered(evt);
+      }
+    });
+
+    GroupLayout balLselectorLayout = new GroupLayout(balLselector);
+    balLselector.setLayout(balLselectorLayout);
+    balLselectorLayout.setHorizontalGroup(balLselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 80, Short.MAX_VALUE)
+    );
+    balLselectorLayout.setVerticalGroup(balLselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 75, Short.MAX_VALUE)
+    );
+
+    warmachines.add(balLselector);
+    balLselector.setBounds(0, 180, 80, 75);
+
+    amLselector.setMaximumSize(new Dimension(50, 52));
+    amLselector.setMinimumSize(new Dimension(50, 52));
+    amLselector.setOpaque(false);
+    amLselector.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent evt) {
+        amLselectorMouseClicked(evt);
+      }
+      public void mouseExited(MouseEvent evt) {
+        amLselectorMouseExited(evt);
+      }
+      public void mouseEntered(MouseEvent evt) {
+        amLselectorMouseEntered(evt);
+      }
+    });
+
+    GroupLayout amLselectorLayout = new GroupLayout(amLselector);
+    amLselector.setLayout(amLselectorLayout);
+    amLselectorLayout.setHorizontalGroup(amLselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 80, Short.MAX_VALUE)
+    );
+    amLselectorLayout.setVerticalGroup(amLselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 70, Short.MAX_VALUE)
+    );
+
+    warmachines.add(amLselector);
+    amLselector.setBounds(0, 100, 80, 70);
+
+    faRselector.setMaximumSize(new Dimension(50, 52));
+    faRselector.setMinimumSize(new Dimension(50, 52));
+    faRselector.setOpaque(false);
+    faRselector.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent evt) {
+        faRselectorMouseClicked(evt);
+      }
+      public void mouseExited(MouseEvent evt) {
+        faRselectorMouseExited(evt);
+      }
+      public void mouseEntered(MouseEvent evt) {
+        faRselectorMouseEntered(evt);
+      }
+    });
+
+    GroupLayout faRselectorLayout = new GroupLayout(faRselector);
+    faRselector.setLayout(faRselectorLayout);
+    faRselectorLayout.setHorizontalGroup(faRselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 100, Short.MAX_VALUE)
+    );
+    faRselectorLayout.setVerticalGroup(faRselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 55, Short.MAX_VALUE)
+    );
+
+    warmachines.add(faRselector);
+    faRselector.setBounds(700, 463, 100, 55);
+
+    amRselector.setMaximumSize(new Dimension(50, 52));
+    amRselector.setMinimumSize(new Dimension(50, 52));
+    amRselector.setOpaque(false);
+    amRselector.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent evt) {
+        amRselectorMouseClicked(evt);
+      }
+      public void mouseExited(MouseEvent evt) {
+        amRselectorMouseExited(evt);
+      }
+      public void mouseEntered(MouseEvent evt) {
+        amRselectorMouseEntered(evt);
+      }
+    });
+
+    GroupLayout amRselectorLayout = new GroupLayout(amRselector);
+    amRselector.setLayout(amRselectorLayout);
+    amRselectorLayout.setHorizontalGroup(amRselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 100, Short.MAX_VALUE)
+    );
+    amRselectorLayout.setVerticalGroup(amRselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 55, Short.MAX_VALUE)
+    );
+
+    warmachines.add(amRselector);
+    amRselector.setBounds(700, 127, 100, 55);
+
+    balRselector.setMaximumSize(new Dimension(50, 52));
+    balRselector.setMinimumSize(new Dimension(50, 52));
+    balRselector.setOpaque(false);
+    balRselector.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent evt) {
+        balRselectorMouseClicked(evt);
+      }
+      public void mouseExited(MouseEvent evt) {
+        balRselectorMouseExited(evt);
+      }
+      public void mouseEntered(MouseEvent evt) {
+        balRselectorMouseEntered(evt);
+      }
+    });
+
+    GroupLayout balRselectorLayout = new GroupLayout(balRselector);
+    balRselector.setLayout(balRselectorLayout);
+    balRselectorLayout.setHorizontalGroup(balRselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 100, Short.MAX_VALUE)
+    );
+    balRselectorLayout.setVerticalGroup(balRselectorLayout.createParallelGroup(Alignment.LEADING)
+      .addGap(0, 55, Short.MAX_VALUE)
+    );
+
+    warmachines.add(balRselector);
+    balRselector.setBounds(700, 210, 100, 55);
+
+    ammocartL.setIcon(new ImageIcon(getClass().getResource("/warmachines/ammocart.png"))); // NOI18N
+    ammocartL.setEnabled(false);
+    ammocartL.setRequestFocusEnabled(false);
+    ammocartL.setVerifyInputWhenFocusTarget(false);
+    warmachines.add(ammocartL);
+    ammocartL.setBounds(60, 100, 45, 66);
+
+    firstaidL.setIcon(new ImageIcon(getClass().getResource("/warmachines/firstaid.png"))); // NOI18N
+    firstaidL.setEnabled(false);
+    firstaidL.setMaximumSize(new Dimension(90, 130));
+    firstaidL.setMinimumSize(new Dimension(90, 130));
+    firstaidL.setPreferredSize(new Dimension(90, 130));
+    firstaidL.setRequestFocusEnabled(false);
+    firstaidL.setVerifyInputWhenFocusTarget(false);
+    warmachines.add(firstaidL);
+    firstaidL.setBounds(20, 380, 90, 130);
+
+    catapultL.setIcon(new ImageIcon(getClass().getResource("/warmachines/catapult.png"))); // NOI18N
+    catapultL.setEnabled(false);
+    catapultL.setRequestFocusEnabled(false);
+    catapultL.setVerifyInputWhenFocusTarget(false);
+    warmachines.add(catapultL);
+    catapultL.setBounds(0, 330, 102, 90);
+
+    ballistaL.setIcon(new ImageIcon(getClass().getResource("/warmachines/ballista.png"))); // NOI18N
+    ballistaL.setEnabled(false);
+    ballistaL.setRequestFocusEnabled(false);
+    ballistaL.setVerifyInputWhenFocusTarget(false);
+    warmachines.add(ballistaL);
+    ballistaL.setBounds(10, 180, 98, 76);
+
+    ammocartR.setIcon(rightAmmocart);
+    ammocartR.setDisabledIcon(rightAmmocartD);
+    ammocartR.setEnabled(false);
+    ammocartR.setMaximumSize(new Dimension(45, 66));
+    ammocartR.setMinimumSize(new Dimension(45, 66));
+    ammocartR.setPreferredSize(new Dimension(45, 66));
+    ammocartR.setRequestFocusEnabled(false);
+    ammocartR.setVerifyInputWhenFocusTarget(false);
+    warmachines.add(ammocartR);
+    ammocartR.setBounds(680, 100, 45, 66);
+
+    ballistaR.setIcon(rightBallista);
+    ballistaR.setDisabledIcon(rightBallistaD);
+    ballistaR.setEnabled(false);
+    ballistaR.setMaximumSize(new Dimension(98, 76));
+    ballistaR.setMinimumSize(new Dimension(98, 76));
+    ballistaR.setPreferredSize(new Dimension(98, 76));
+    ballistaR.setRequestFocusEnabled(false);
+    ballistaR.setVerifyInputWhenFocusTarget(false);
+    warmachines.add(ballistaR);
+    ballistaR.setBounds(680, 180, 98, 76);
+
+    firstaidR.setIcon(rightFirstaid);
+    firstaidR.setDisabledIcon(rightFirstaidD);
+    firstaidR.setEnabled(false);
+    firstaidR.setMaximumSize(new Dimension(90, 130));
+    firstaidR.setMinimumSize(new Dimension(90, 130));
+    firstaidR.setPreferredSize(new Dimension(90, 130));
+    firstaidR.setRequestFocusEnabled(false);
+    firstaidR.setVerifyInputWhenFocusTarget(false);
+    warmachines.add(firstaidR);
+    firstaidR.setBounds(680, 370, 90, 130);
+
+    jLayeredPane1.setLayer(warmachines, 50);
+    jLayeredPane1.add(warmachines);
+
+    loadingIndicator.setMaximumSize(new Dimension(800, 556));
+    loadingIndicator.setMinimumSize(new Dimension(800, 556));
+    loadingIndicator.setOpaque(false);
+    loadingIndicator.setLayout(new BorderLayout());
+    jLayeredPane1.setLayer(loadingIndicator, 110);
+    jLayeredPane1.add(loadingIndicator);
+
+    jTable1.setModel(tm);
+    jTable1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    tablePanel.setViewportView(jTable1);
+
+    helpTextPanel.setBorder(new LineBorder(new Color(0, 0, 0), 1, true));
+
+    jTextPane1.setEditable(false);
+    jTextPane1.setBorder(null);
+    jTextPane1.setContentType("text/html"); // NOI18N
+    jTextPane1.setText("<html>\n  <head>\n<style>\nmargin:0;\npadding:0;\n</style>\n  </head>\n  <body>\n    <table>\n<tr><td><b>W, S:</b></td><td> change Y position</td></tr>\n<tr><td><b>A, D:</b></td><td> change X position</td></tr>\n<tr><td><b>T, G:</b></td><td> change terrain</td></tr>\n<tr><td><b>O:</b></td><td> toggle obstacles</td></tr>\n<tr><td><b>P:</b></td><td> toggle passability</td></tr>\n<tr><td><b>H: </b></td><td> toggle hex layer</td></tr>\n    </table>\n  </body>\n</html>\n"); // NOI18N
+    jTextPane1.setMaximumSize(new Dimension(220, 100));
+    jTextPane1.setMinimumSize(new Dimension(220, 100));
+    jTextPane1.setRequestFocusEnabled(false);
+    helpTextPanel.setViewportView(jTextPane1);
+
+    jPanel2.setBorder(new LineBorder(new Color(0, 0, 0), 1, true));
+
+    flipVbtn.setText("Flip vertically");
+    flipVbtn.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent evt) {
+        flipVbtnActionPerformed(evt);
+      }
+    });
+
+    flipHbtn.setText("Flip Horizontally");
+    flipHbtn.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent evt) {
+        flipHbtnActionPerformed(evt);
+      }
+    });
+
+    searchMirrorV.setText("while searching");
+    searchMirrorV.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent evt) {
+        searchMirrorVActionPerformed(evt);
+      }
+    });
+
+    searchMirrorH.setText("while searching");
+
+    fixedShape.setText("Search for exact position match");
+    fixedShape.setToolTipText("");
+    fixedShape.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent evt) {
+        fixedShapeActionPerformed(evt);
+      }
+    });
+
+    searchButton.setText("Search");
+    searchButton.addMouseListener(new MouseAdapter() {
+      public void mouseExited(MouseEvent evt) {
+        searchButtonMouseExited(evt);
+      }
+      public void mouseEntered(MouseEvent evt) {
+        searchButtonMouseEntered(evt);
+      }
+    });
+    searchButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent evt) {
+        searchButtonActionPerformed(evt);
+      }
+    });
+
+    clearButton.setText("Clear grid");
+    clearButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent evt) {
+        clearButtonActionPerformed(evt);
+      }
+    });
+
+    resultsLabel.setText("   ");
+    resultsLabel.setBorder(BorderFactory.createEtchedBorder());
+    resultsLabel.setMaximumSize(new Dimension(300, 15));
+
+    selectAreaBtn.setText("Select map area to search");
+    selectAreaBtn.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent evt) {
+        selectAreaBtnActionPerformed(evt);
+      }
+    });
+
+    GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
+    jPanel2.setLayout(jPanel2Layout);
+    jPanel2Layout.setHorizontalGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING)
+      .addGroup(jPanel2Layout.createSequentialGroup()
+        .addContainerGap()
+        .addGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING)
+          .addGroup(jPanel2Layout.createSequentialGroup()
+            .addGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING)
+              .addGroup(jPanel2Layout.createSequentialGroup()
+                .addComponent(flipHbtn)
+                .addPreferredGap(ComponentPlacement.UNRELATED)
+                .addComponent(searchMirrorH))
+              .addComponent(fixedShape)
+              .addGroup(jPanel2Layout.createSequentialGroup()
+                .addComponent(flipVbtn)
+                .addPreferredGap(ComponentPlacement.UNRELATED)
+                .addComponent(searchMirrorV)))
+            .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+          .addGroup(jPanel2Layout.createSequentialGroup()
+            .addGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING, false)
+              .addComponent(selectAreaBtn)
+              .addGroup(jPanel2Layout.createSequentialGroup()
+                .addComponent(searchButton)
+                .addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(clearButton)))
+            .addGap(0, 0, Short.MAX_VALUE))
+          .addComponent(resultsLabel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+    );
+
+    jPanel2Layout.linkSize(SwingConstants.HORIZONTAL, new Component[] {flipHbtn, flipVbtn});
+
+    jPanel2Layout.setVerticalGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING)
+      .addGroup(jPanel2Layout.createSequentialGroup()
+        .addContainerGap()
+        .addGroup(jPanel2Layout.createParallelGroup(Alignment.BASELINE)
+          .addComponent(flipVbtn)
+          .addComponent(searchMirrorV))
+        .addPreferredGap(ComponentPlacement.RELATED)
+        .addGroup(jPanel2Layout.createParallelGroup(Alignment.BASELINE)
+          .addComponent(flipHbtn)
+          .addComponent(searchMirrorH))
+        .addPreferredGap(ComponentPlacement.RELATED)
+        .addComponent(fixedShape)
+        .addPreferredGap(ComponentPlacement.RELATED)
+        .addComponent(selectAreaBtn)
+        .addPreferredGap(ComponentPlacement.RELATED)
+        .addGroup(jPanel2Layout.createParallelGroup(Alignment.BASELINE)
+          .addComponent(searchButton)
+          .addComponent(clearButton))
+        .addPreferredGap(ComponentPlacement.RELATED)
+        .addComponent(resultsLabel, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
+        .addContainerGap(24, Short.MAX_VALUE))
+    );
+
+    jPanel2Layout.linkSize(SwingConstants.VERTICAL, new Component[] {flipHbtn, flipVbtn, searchMirrorH, searchMirrorV});
+
+    GroupLayout layout = new GroupLayout(getContentPane());
+    getContentPane().setLayout(layout);
+    layout.setHorizontalGroup(layout.createParallelGroup(Alignment.LEADING)
+      .addGroup(layout.createSequentialGroup()
+        .addContainerGap()
+        .addGroup(layout.createParallelGroup(Alignment.LEADING, false)
+          .addComponent(jLayeredPane1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+          .addGroup(layout.createSequentialGroup()
+            .addComponent(tablePanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(ComponentPlacement.RELATED)
+            .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+        .addGap(5, 5, 5)
+        .addGroup(layout.createParallelGroup(Alignment.LEADING, false)
+          .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, 260, Short.MAX_VALUE)
+          .addComponent(helpTextPanel, GroupLayout.DEFAULT_SIZE, 260, Short.MAX_VALUE))
+        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
+    layout.setVerticalGroup(layout.createParallelGroup(Alignment.LEADING)
+      .addGroup(layout.createSequentialGroup()
+        .addContainerGap()
+        .addGroup(layout.createParallelGroup(Alignment.LEADING)
+          .addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+          .addComponent(jLayeredPane1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+        .addPreferredGap(ComponentPlacement.RELATED)
+        .addGroup(layout.createParallelGroup(Alignment.LEADING)
+          .addComponent(tablePanel, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+          .addComponent(helpTextPanel)
+          .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        .addContainerGap())
+    );
+
+    pack();
+  }// </editor-fold>//GEN-END:initComponents
+
+  private void terrainListValueChanged(ListSelectionEvent evt) {//GEN-FIRST:event_terrainListValueChanged
+    loadBattleField();
+  }//GEN-LAST:event_terrainListValueChanged
+
+  private void searchButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
+    loading.start();
+    tm.clear();
+    new Thread(() -> {
+      java.util.List<Battlefield> result = Search.search(hexGrid, fixedShape.isSelected(), searchMirrorV.isSelected(), searchMirrorH.isSelected(), area);
+      tm.addAll(result);
+      invokeLater(() -> {
+        resultsLabel.setText("" + result.size() + " matches");
+        jTable1.updateUI();
+        loading.stop();
+      });
+    }).start();
+
+  }//GEN-LAST:event_searchButtonActionPerformed
+
+  private void clearButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
+    clearHexGrid();
+  }//GEN-LAST:event_clearButtonActionPerformed
+
+  private void xSpinnerStateChanged(ChangeEvent evt) {//GEN-FIRST:event_xSpinnerStateChanged
+    loadBattleField();
+  }//GEN-LAST:event_xSpinnerStateChanged
+
+  private void ySpinnerStateChanged(ChangeEvent evt) {//GEN-FIRST:event_ySpinnerStateChanged
+    loadBattleField();
+  }//GEN-LAST:event_ySpinnerStateChanged
+
+  //<editor-fold defaultstate="collapsed" desc="keyNavigation">
+  private boolean keyNavigation(final KeyEvent evt) {
+//    System.out.println(evt.getComponent());
+    switch (evt.getKeyCode()) {
+      case KeyEvent.VK_P: {
+        showBlocked.setSelected(!showBlocked.isSelected());
+        passabilityLayer.setVisible(showBlocked.isSelected());
+        return true;
+      }
+      case KeyEvent.VK_C: {
+        clearHexGrid();
+        return true;
+      }
+      case KeyEvent.VK_O: {
+        showObst.setSelected(!showObst.isSelected());
+        obstacleLayer.setVisible(showObst.isSelected());
+        return true;
+      }
+      case KeyEvent.VK_H: {
+        showHex.setSelected(!showHex.isSelected());
+        hexLayer.setVisible(showHex.isSelected());
+        return true;
+      }
+      case KeyEvent.VK_T: {
+        changeTerrainListSelection(-1);
+        return true;
+      }
+      case KeyEvent.VK_G: {
+        changeTerrainListSelection(1);
+        return true;
+      }
+      case KeyEvent.VK_W: {
+        mapY.decrement();
+        return true;
+      }
+      case KeyEvent.VK_S: {
+        mapY.increment();
+        return true;
+      }
+      case KeyEvent.VK_A: {
+        mapX.decrement();
+        return true;
+      }
+      case KeyEvent.VK_D: {
+        mapX.increment();
+        return true;
+      }
+      default:
     }
+    return false;
   }
+  //</editor-fold>
+
+  private void showHexStateChanged(ChangeEvent evt) {//GEN-FIRST:event_showHexStateChanged
+    hexLayer.setVisible(showHex.isSelected());
+  }//GEN-LAST:event_showHexStateChanged
+
+  private void showObstStateChanged(ChangeEvent evt) {//GEN-FIRST:event_showObstStateChanged
+    obstacleLayer.setVisible(showObst.isSelected());
+  }//GEN-LAST:event_showObstStateChanged
+
+  private void showBlockedStateChanged(ChangeEvent evt) {//GEN-FIRST:event_showBlockedStateChanged
+    passabilityLayer.setVisible(showBlocked.isSelected());
+  }//GEN-LAST:event_showBlockedStateChanged
+
+  private void terrainListMouseMoved(MouseEvent evt) {//GEN-FIRST:event_terrainListMouseMoved
+    terrainCursor(evt);
+  }//GEN-LAST:event_terrainListMouseMoved
+
+  private void terrainListMouseExited(MouseEvent evt) {//GEN-FIRST:event_terrainListMouseExited
+    fakeCursor.setImg(0);
+  }//GEN-LAST:event_terrainListMouseExited
+
+  private void searchButtonMouseEntered(MouseEvent evt) {//GEN-FIRST:event_searchButtonMouseEntered
+    fakeCursor.setImg(3);
+  }//GEN-LAST:event_searchButtonMouseEntered
+
+  private void searchButtonMouseExited(MouseEvent evt) {//GEN-FIRST:event_searchButtonMouseExited
+    fakeCursor.setImg(0);
+  }//GEN-LAST:event_searchButtonMouseExited
+
+  private void faLselectorMouseEntered(MouseEvent evt) {//GEN-FIRST:event_faLselectorMouseEntered
+    if (showWarmachines.isSelected()) {
+      firstaidL.setEnabled(!showFirstaidL);
+    }
+  }//GEN-LAST:event_faLselectorMouseEntered
+
+  private void faLselectorMouseExited(MouseEvent evt) {//GEN-FIRST:event_faLselectorMouseExited
+    if (showWarmachines.isSelected()) {
+      firstaidL.setEnabled(showFirstaidL);
+    }
+  }//GEN-LAST:event_faLselectorMouseExited
+
+  private void faLselectorMouseClicked(MouseEvent evt) {//GEN-FIRST:event_faLselectorMouseClicked
+    if (showWarmachines.isSelected()) {
+      showFirstaidL = !showFirstaidL;
+      firstaidL.setEnabled(showFirstaidL);
+    }
+  }//GEN-LAST:event_faLselectorMouseClicked
+
+  private void catLselectorMouseClicked(MouseEvent evt) {//GEN-FIRST:event_catLselectorMouseClicked
+    if (showWarmachines.isSelected()) {
+      showCatapultL = !showCatapultL;
+      catapultL.setEnabled(showCatapultL);
+    }
+  }//GEN-LAST:event_catLselectorMouseClicked
+
+  private void catLselectorMouseEntered(MouseEvent evt) {//GEN-FIRST:event_catLselectorMouseEntered
+    if (showWarmachines.isSelected()) {
+      catapultL.setEnabled(!showCatapultL);
+    }
+  }//GEN-LAST:event_catLselectorMouseEntered
+
+  private void catLselectorMouseExited(MouseEvent evt) {//GEN-FIRST:event_catLselectorMouseExited
+    if (showWarmachines.isSelected()) {
+      catapultL.setEnabled(showCatapultL);
+    }
+  }//GEN-LAST:event_catLselectorMouseExited
+
+  private void balLselectorMouseClicked(MouseEvent evt) {//GEN-FIRST:event_balLselectorMouseClicked
+    if (showWarmachines.isSelected()) {
+      showBallistaL = !showBallistaL;
+      ballistaL.setEnabled(showBallistaL);
+    }
+  }//GEN-LAST:event_balLselectorMouseClicked
+
+  private void balLselectorMouseExited(MouseEvent evt) {//GEN-FIRST:event_balLselectorMouseExited
+    if (showWarmachines.isSelected()) {
+      ballistaL.setEnabled(showBallistaL);
+    }
+  }//GEN-LAST:event_balLselectorMouseExited
+
+  private void balLselectorMouseEntered(MouseEvent evt) {//GEN-FIRST:event_balLselectorMouseEntered
+    if (showWarmachines.isSelected()) {
+      ballistaL.setEnabled(!showBallistaL);
+    }
+  }//GEN-LAST:event_balLselectorMouseEntered
+
+  private void amLselectorMouseClicked(MouseEvent evt) {//GEN-FIRST:event_amLselectorMouseClicked
+    if (showWarmachines.isSelected()) {
+      showAmmocartL = !showAmmocartL;
+      ammocartL.setEnabled(showAmmocartL);
+    }
+  }//GEN-LAST:event_amLselectorMouseClicked
+
+  private void amLselectorMouseEntered(MouseEvent evt) {//GEN-FIRST:event_amLselectorMouseEntered
+    if (showWarmachines.isSelected()) {
+      ammocartL.setEnabled(!showAmmocartL);
+    }
+  }//GEN-LAST:event_amLselectorMouseEntered
+
+  private void amLselectorMouseExited(MouseEvent evt) {//GEN-FIRST:event_amLselectorMouseExited
+    if (showWarmachines.isSelected()) {
+      ammocartL.setEnabled(showAmmocartL);
+    }
+  }//GEN-LAST:event_amLselectorMouseExited
+
+  private void faRselectorMouseClicked(MouseEvent evt) {//GEN-FIRST:event_faRselectorMouseClicked
+    if (showWarmachines.isSelected()) {
+      showFirstaidR = !showFirstaidR;
+      firstaidR.setEnabled(showFirstaidR);
+    }
+  }//GEN-LAST:event_faRselectorMouseClicked
+
+  private void faRselectorMouseEntered(MouseEvent evt) {//GEN-FIRST:event_faRselectorMouseEntered
+    if (showWarmachines.isSelected()) {
+      firstaidR.setEnabled(!showFirstaidR);
+    }
+  }//GEN-LAST:event_faRselectorMouseEntered
+
+  private void faRselectorMouseExited(MouseEvent evt) {//GEN-FIRST:event_faRselectorMouseExited
+    if (showWarmachines.isSelected()) {
+      firstaidR.setEnabled(showFirstaidR);
+    }
+  }//GEN-LAST:event_faRselectorMouseExited
+
+  private void balRselectorMouseClicked(MouseEvent evt) {//GEN-FIRST:event_balRselectorMouseClicked
+    if (showWarmachines.isSelected()) {
+      showBallistaR = !showBallistaR;
+      ballistaR.setEnabled(showBallistaR);
+    }
+  }//GEN-LAST:event_balRselectorMouseClicked
+
+  private void balRselectorMouseEntered(MouseEvent evt) {//GEN-FIRST:event_balRselectorMouseEntered
+    if (showWarmachines.isSelected()) {
+      ballistaR.setEnabled(!showBallistaR);
+    }
+  }//GEN-LAST:event_balRselectorMouseEntered
+
+  private void balRselectorMouseExited(MouseEvent evt) {//GEN-FIRST:event_balRselectorMouseExited
+    if (showWarmachines.isSelected()) {
+      ballistaR.setEnabled(showBallistaR);
+    }
+  }//GEN-LAST:event_balRselectorMouseExited
+
+  private void amRselectorMouseClicked(MouseEvent evt) {//GEN-FIRST:event_amRselectorMouseClicked
+    if (showWarmachines.isSelected()) {
+      showAmmocartR = !showAmmocartR;
+      ammocartR.setEnabled(showAmmocartR);
+    }
+  }//GEN-LAST:event_amRselectorMouseClicked
+
+  private void amRselectorMouseEntered(MouseEvent evt) {//GEN-FIRST:event_amRselectorMouseEntered
+    if (showWarmachines.isSelected()) {
+      ammocartR.setEnabled(!showAmmocartR);
+    }
+  }//GEN-LAST:event_amRselectorMouseEntered
+
+  private void amRselectorMouseExited(MouseEvent evt) {//GEN-FIRST:event_amRselectorMouseExited
+    if (showWarmachines.isSelected()) {
+      ammocartR.setEnabled(showAmmocartR);
+    }
+  }//GEN-LAST:event_amRselectorMouseExited
+
+  private void flipVbtnActionPerformed(ActionEvent evt) {//GEN-FIRST:event_flipVbtnActionPerformed
+    final Set<Integer> pattern = hexGrid.getPattern();
+    final Set<Integer> patternMask = hexGrid.getPatternMask();
+    final Set<Integer> flipV = new TreeSet<>();
+    final Set<Integer> flipVm = new TreeSet<>();
+    for (Integer hex : pattern) {
+      int y = HexTools.getY(hex);
+      flipV.add(posToHex(HexTools.getX(hex), BFIELD_HEIGHT - 1 - y));
+    }
+    for (Integer hex : patternMask) {
+      int y = HexTools.getY(hex);
+      flipVm.add(posToHex(HexTools.getX(hex), BFIELD_HEIGHT - 1 - y));
+    }
+    hexGrid.clear();
+    for (Integer hex : flipV) {
+      hexGrid.setState(HexTools.getX(hex), HexTools.getY(hex), HexCellState.ENABLED);
+    }
+    for (Integer hex : flipVm) {
+      hexGrid.setState(HexTools.getX(hex), HexTools.getY(hex), HexCellState.DISABLED);
+    }
+    updateHexGrid();
+  }//GEN-LAST:event_flipVbtnActionPerformed
+
+  private void flipHbtnActionPerformed(ActionEvent evt) {//GEN-FIRST:event_flipHbtnActionPerformed
+    final Set<Integer> pattern = hexGrid.getPattern();
+    final Set<Integer> patternMask = hexGrid.getPatternMask();
+    final Set<Integer> flipH = new TreeSet<>();
+    final Set<Integer> flipHm = new TreeSet<>();
+    for (Integer hex : pattern) {
+      int y = HexTools.getY(hex);
+      int pos = (BFIELD_WIDTH - 1) - HexTools.getX(hex) + (isOddRow(y) ? 1 : 0);
+      if (hexIsVisible(pos)) {
+        flipH.add(posToHex(pos, y));
+      }
+    }
+    for (Integer hex : patternMask) {
+      int y = HexTools.getY(hex);
+      int pos = (BFIELD_WIDTH - 1) - HexTools.getX(hex) + (isOddRow(y) ? 1 : 0);
+      if (hexIsVisible(pos)) {
+        flipHm.add(posToHex(pos, y));
+      }
+    }
+    hexGrid.clear();
+    for (Integer hex : flipH) {
+      hexGrid.setState(HexTools.getX(hex), HexTools.getY(hex), HexCellState.ENABLED);
+    }
+    for (Integer hex : flipHm) {
+      hexGrid.setState(HexTools.getX(hex), HexTools.getY(hex), HexCellState.DISABLED);
+    }
+    updateHexGrid();
+  }//GEN-LAST:event_flipHbtnActionPerformed
+
+  private void searchMirrorVActionPerformed(ActionEvent evt) {//GEN-FIRST:event_searchMirrorVActionPerformed
+    // TODO add your handling code here:
+  }//GEN-LAST:event_searchMirrorVActionPerformed
+
+  private void showWarmachinesActionPerformed(ActionEvent evt) {//GEN-FIRST:event_showWarmachinesActionPerformed
+    final boolean w = showWarmachines.isSelected();
+    Arrays.asList(
+            ammocartL,
+            ammocartR,
+            ballistaL,
+            ballistaR,
+            catapultL,
+            firstaidL,
+            firstaidR
+    )
+            .forEach(L -> L.setVisible(w || L.isEnabled()));
+  }//GEN-LAST:event_showWarmachinesActionPerformed
+
+  private void fixedShapeActionPerformed(ActionEvent evt) {//GEN-FIRST:event_fixedShapeActionPerformed
+    if (fixedShape.isSelected()) {
+      searchMirrorH.setEnabled(false);
+      searchMirrorV.setEnabled(false);
+    } else {
+      searchMirrorH.setEnabled(true);
+      searchMirrorV.setEnabled(true);
+    }
+
+  }//GEN-LAST:event_fixedShapeActionPerformed
+
+  private void selectAreaBtnActionPerformed(ActionEvent evt) {//GEN-FIRST:event_selectAreaBtnActionPerformed
+    invokeLater(() -> {
+      SelectAreaDialog dialog = new SelectAreaDialog(rootFrame, area);
+      dialog.setVisible(true);
+      System.out.println("CONFIRM: " + dialog.isConfirmed());
+      System.out.println("FULL: " + dialog.isFullmap());
+      System.out.println("rect: " + dialog.getArea());
+      if (dialog.isConfirmed()) {
+        area = dialog.getArea();
+      }
+    });
+
+  }//GEN-LAST:event_selectAreaBtnActionPerformed
+
+  private void showAnchorCellsStateChanged(ChangeEvent evt) {//GEN-FIRST:event_showAnchorCellsStateChanged
+    anchorLayer.setVisible(showAnchorCells.isSelected());
+  }//GEN-LAST:event_showAnchorCellsStateChanged
+
+  //<editor-fold defaultstate="collapsed" desc=" Generated fields ">
+  // Variables declaration - do not modify//GEN-BEGIN:variables
+  private JPanel amLselector;
+  private JPanel amRselector;
+  private JLabel ammocartL;
+  private JLabel ammocartR;
+  private JPanel anchorLayer;
+  private JLabel background;
+  private JPanel backgroundLayer;
+  private JPanel balLselector;
+  private JPanel balRselector;
+  private JLabel ballistaL;
+  private JLabel ballistaR;
+  private JPanel catLselector;
+  private JLabel catapultL;
+  private JButton clearButton;
+  private JPanel faLselector;
+  private JPanel faRselector;
+  private JLabel firstaidL;
+  private JLabel firstaidR;
+  private JCheckBox fixedShape;
+  private JButton flipHbtn;
+  private JButton flipVbtn;
+  private JScrollPane helpTextPanel;
+  private JPanel hexLayer;
+  private JLabel jLabel1;
+  private JLabel jLabel2;
+  private JLayeredPane jLayeredPane1;
+  private JPanel jPanel1;
+  private JPanel jPanel2;
+  private JScrollPane jScrollPane1;
+  private JTable jTable1;
+  private JTextPane jTextPane1;
+  private JPanel loadingIndicator;
+  private JPanel obstacleLayer;
+  private JPanel passabilityLayer;
+  private JLabel resultsLabel;
+  private JButton searchButton;
+  private JCheckBox searchMirrorH;
+  private JCheckBox searchMirrorV;
+  private JButton selectAreaBtn;
+  private JCheckBox showAnchorCells;
+  private JCheckBox showBlocked;
+  private JCheckBox showHex;
+  private JCheckBox showObst;
+  private JCheckBox showWarmachines;
+  private JScrollPane tablePanel;
+  private JList<String> terrainList;
+  private JPanel warmachines;
+  private JSpinner xSpinner;
+  private JSpinner ySpinner;
+  // End of variables declaration//GEN-END:variables
+  //</editor-fold>
 
   public static void start() {
     //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -460,39 +1284,10 @@ public final class Gui extends javax.swing.JFrame {
           break;
         }
       }
-    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
     }
     //</editor-fold>
-    invokeLater(() -> {
-      new Gui().setVisible(true);
-    });
+    invokeLater(() -> new Gui().setVisible(true));
   }
-
-  //<editor-fold defaultstate="collapsed" desc="components">
-  // Variables declaration - do not modify//GEN-BEGIN:variables
-  private javax.swing.JLabel background;
-  private javax.swing.JPanel backgroundLayer;
-  private javax.swing.JLayeredPane canvas;
-  private javax.swing.JPanel controls;
-  private javax.swing.JToggleButton cursorNavigation;
-  private javax.swing.JButton debugBtn;
-  private javax.swing.JPanel hexLayer;
-  private javax.swing.JButton jButton1;
-  private javax.swing.JButton jButton2;
-  private javax.swing.JLabel jLabel2;
-  private javax.swing.JLabel jLabel3;
-  private javax.swing.JList<String> jList1;
-  private javax.swing.JScrollPane jScrollPane1;
-  private javax.swing.JTable jTable1;
-  private javax.swing.JPanel loading;
-  private javax.swing.JPanel obstacleLayer;
-  private javax.swing.JLabel resultLabel;
-  private javax.swing.JScrollPane results;
-  private javax.swing.JCheckBox showObst;
-  private javax.swing.JCheckBox showgrid;
-  private javax.swing.JSpinner xSpinner;
-  private javax.swing.JSpinner ySpinner;
-  // End of variables declaration//GEN-END:variables
-  //</editor-fold>
 
 }

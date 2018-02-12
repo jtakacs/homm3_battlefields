@@ -15,8 +15,7 @@ public class ResultTableModel extends AbstractTableModel {
   public ResultTableModel() {
     columns.add("Position X");
     columns.add("Position Y");
-    columns.add("Terrain name");
-    columns.add("Terrain ID");
+    columns.add("Terrain");
   }
 
   public void addAll(final List<Battlefield> rows) {
@@ -39,7 +38,7 @@ public class ResultTableModel extends AbstractTableModel {
 
   @Override
   public int getColumnCount() {
-    return 4;
+    return columns.size();
   }
 
   @Override
@@ -49,23 +48,24 @@ public class ResultTableModel extends AbstractTableModel {
 
   @Override
   public Object getValueAt(final int rowIndex, final int columnIndex) {
-    final Battlefield get = data.get(rowIndex);
+    final Battlefield bf = data.get(rowIndex);
     switch (columnIndex) {
       case 0:
-        return "" + get.mapX;
+        return bf.mapX;
       case 1:
-        return "" + get.mapY;
+        return bf.mapY;
       case 2:
-        return get.terrain.description;
-      case 3:
-        return "" + get.terrain.ID;
+        return bf.terrain.description;
       default:
-        return "";
+        return 0;
     }
   }
 
   @Override
   public Class<?> getColumnClass(final int columnIndex) {
+    if (columnIndex == 0 || columnIndex == 1) {
+      return Integer.class;
+    }
     return String.class;
   }
 

@@ -10,8 +10,8 @@ public class HexTools {
   public static final BigInteger calcBitMask(final Set<Integer> obstacle) {
     BigInteger mask = BigInteger.ZERO;
     final List<Integer> blocked = new ArrayList<>();
-    for (final int o : obstacle) {
-      blocked.add(distort(o));
+    for (final int hex : obstacle) {
+      blocked.add(distort(hex));
     }
     Collections.sort(blocked);
     for (int i = BFIELD_SIZE - 1; i >= 0; i--) {
@@ -66,6 +66,11 @@ public class HexTools {
     return (0 <= hex) && (hex < BFIELD_SIZE);
   }
 
+  public static boolean hexIsVisible(final int hex) {
+    final int x = getX(hex);
+    return (0 < x) && (x < BFIELD_WIDTH - 1);
+  }
+
   public static int posToHex(final int x, final int y) {
     return x + y * BFIELD_WIDTH;
   }
@@ -95,7 +100,7 @@ public class HexTools {
           }
         }
         sb.append(System.lineSeparator())
-          .append("|    ");
+                .append("|    ");
       } else {
         sb.append("  ");
       }
