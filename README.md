@@ -19,5 +19,6 @@
 
 #todo
 
+* keyboard event listener bug
 * non standard large map support
 * HotA new terrains support

@@ -11,7 +11,6 @@ import static java.lang.Integer.MAX_VALUE;
 import battlefieldexplorer.gui.HexGrid;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.TreeSet;
 
 public class SearchParams {
@@ -30,7 +29,7 @@ public class SearchParams {
     size = MAX_VALUE;
   }
 
-  private SearchParams(final Set<Integer> pattern, final Set<Integer> mask, final boolean fixed, final boolean mirrorV, final boolean mirrorH) {
+  private SearchParams(final TreeSet<Integer> pattern, final TreeSet<Integer> mask, final boolean fixed, final boolean mirrorV, final boolean mirrorH) {
     this.fixed = fixed;
     this.mirrorH = mirrorH;
     this.mirrorV = mirrorV;
@@ -48,17 +47,17 @@ public class SearchParams {
   }
 
   public static SearchParams from(final HexGrid hexGrid, final boolean fixed, final boolean mirrorV, final boolean mirrorH) {
-    final Set<Integer> pattern = hexGrid.getPattern();
-    final Set<Integer> mask = hexGrid.getPatternMask();
+    final TreeSet<Integer> pattern = hexGrid.getPattern();
+    final TreeSet<Integer> mask = hexGrid.getPatternMask();
     if ((!pattern.isEmpty()) || (!mask.isEmpty())) {
       return new SearchParams(pattern, mask, fixed, mirrorV, mirrorH);
     }
     return new SearchParams();
   }
 
-  private SearchPattern flipH(final Set<Integer> pattern, final Set<Integer> mask) {
-    final Set<Integer> flipH = new TreeSet<>();
-    final Set<Integer> flipHm = new TreeSet<>();
+  private SearchPattern flipH(final TreeSet<Integer> pattern, final TreeSet<Integer> mask) {
+    final TreeSet<Integer> flipH = new TreeSet<>();
+    final TreeSet<Integer> flipHm = new TreeSet<>();
     for (final Integer hex : pattern) {
       int y = getY(hex);
       flipH.add(posToHex(BFIELD_WIDTH - 1 - getX(hex) + (isOddRow(y) ? 1 : 0), y));
@@ -70,9 +69,9 @@ public class SearchParams {
     return pattern(flipH).mask(flipHm).fixed(false);
   }
 
-  private SearchPattern flipV(final Set<Integer> pattern, final Set<Integer> mask) {
-    final Set<Integer> flipV = new TreeSet<>();
-    final Set<Integer> flipVm = new TreeSet<>();
+  private SearchPattern flipV(final TreeSet<Integer> pattern, final TreeSet<Integer> mask) {
+    final TreeSet<Integer> flipV = new TreeSet<>();
+    final TreeSet<Integer> flipVm = new TreeSet<>();
     for (final Integer hex : pattern) {
       flipV.add(posToHex(getX(hex), BFIELD_HEIGHT - 1 - getY(hex)));
     }

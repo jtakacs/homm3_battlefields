@@ -3,7 +3,6 @@ package battlefieldexplorer.gui;
 import static battlefieldexplorer.util.Constants.BFIELD_HEIGHT;
 import static battlefieldexplorer.util.Constants.BFIELD_WIDTH;
 import static battlefieldexplorer.util.Constants.MAP_SIZE;
-import static battlefieldexplorer.util.HexTools.hexIsValid;
 import static battlefieldexplorer.util.HexTools.hexIsVisible;
 import static battlefieldexplorer.util.HexTools.isOddRow;
 import static battlefieldexplorer.util.HexTools.posToHex;
@@ -11,6 +10,7 @@ import static javax.swing.SwingConstants.LEFT;
 import static javax.swing.SwingConstants.TOP;
 import static javax.swing.SwingUtilities.invokeLater;
 import static javax.swing.UIManager.getInstalledLookAndFeels;
+import static javax.swing.UIManager.getLookAndFeelDefaults;
 import static javax.swing.UIManager.setLookAndFeel;
 import battlefieldexplorer.generator.*;
 import battlefieldexplorer.search.*;
@@ -18,7 +18,11 @@ import battlefieldexplorer.util.HexCellState;
 import battlefieldexplorer.util.HexTools;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JSpinner.NumberEditor;
@@ -26,6 +30,9 @@ import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.LineBorder;
 import javax.swing.event.*;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import org.oxbow.swingbits.misc.JSearchTextField;
 import org.oxbow.swingbits.table.filter.TableRowFilterSupport;
 
 //TODO cleanup
@@ -94,6 +101,9 @@ public class Gui extends JFrame {
               }
               return false;
             });
+    imageInfo.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
+    imageInfo.setBackground(new Color(0, 0, 0, 0));
+    imageTextLayer.setVisible(false);
     new Thread(() -> {
       BattleFieldInfo.load();
       invokeLater(() -> {
@@ -113,6 +123,7 @@ public class Gui extends JFrame {
 
   public void displayBattlefield(final Battlefield bf) {
     invokeLater(() -> {
+      imageInfo.setText(String.format("X: %s  Y: %s\n%s", bf.mapX, bf.mapY, bf.terrain.description));
       background.setIcon(TerrainImages.getImage(bf.terrain));
       background.updateUI();
       placeObstacles(bf.obstacles);
@@ -191,6 +202,7 @@ public class Gui extends JFrame {
   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
   private void initComponents() {
 
+    jFileChooser1 = new JFileChooser();
     jPanel1 = new JPanel();
     jScrollPane1 = new JScrollPane();
     terrainList = new JList<>();
@@ -225,6 +237,9 @@ public class Gui extends JFrame {
     ammocartR = new JLabel();
     ballistaR = new JLabel();
     firstaidR = new JLabel();
+    imageTextLayer = new JPanel();
+    jPanel3 = new JPanel();
+    imageInfo = new JTextPane();
     loadingIndicator = new JPanel();
     tablePanel = new JScrollPane();
     jTable1 = new JTable();
@@ -240,9 +255,16 @@ public class Gui extends JFrame {
     clearButton = new JButton();
     resultsLabel = new JLabel();
     selectAreaBtn = new JButton();
+    jButton1 = new JButton();
+
+    jFileChooser1.setAcceptAllFileFilterUsed(false);
+    jFileChooser1.setDialogType(JFileChooser.SAVE_DIALOG);
+    jFileChooser1.setDialogTitle("Save image");
+    jFileChooser1.setFileFilter(new FileNameExtensionFilter("PNG file", "png"));
 
     setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     setTitle("BattleField Explorer");
+    setFont(new Font("Andale Mono", 1, 12)); // NOI18N
     setMinimumSize(new Dimension(820, 600));
 
     jPanel1.setBorder(new LineBorder(new Color(0, 0, 0), 1, true));
@@ -377,11 +399,11 @@ public class Gui extends JFrame {
         .addComponent(showObst)
         .addPreferredGap(ComponentPlacement.RELATED)
         .addComponent(showBlocked)
-        .addPreferredGap(ComponentPlacement.UNRELATED)
+        .addPreferredGap(ComponentPlacement.RELATED)
         .addComponent(showWarmachines)
-        .addPreferredGap(ComponentPlacement.UNRELATED)
+        .addPreferredGap(ComponentPlacement.RELATED)
         .addComponent(showAnchorCells)
-        .addContainerGap(78, Short.MAX_VALUE))
+        .addContainerGap(86, Short.MAX_VALUE))
     );
 
     jLayeredPane1.setBorder(new LineBorder(new Color(0, 0, 0), 1, true));
@@ -699,6 +721,58 @@ public class Gui extends JFrame {
     jLayeredPane1.setLayer(warmachines, 50);
     jLayeredPane1.add(warmachines);
 
+    imageTextLayer.setMaximumSize(new Dimension(800, 556));
+    imageTextLayer.setMinimumSize(new Dimension(800, 556));
+    imageTextLayer.setName(""); // NOI18N
+    imageTextLayer.setOpaque(false);
+    imageTextLayer.setPreferredSize(new Dimension(800, 556));
+
+    jPanel3.setBackground(new Color(0,0,0,80));
+
+    imageInfo.setEditable(false);
+    imageInfo.setBackground(new Color(0, 0, 0, 50));
+    imageInfo.setBorder(null);
+    imageInfo.setFont(new Font("Andale Mono", 1, 24)); // NOI18N
+    imageInfo.setForeground(new Color(102, 255, 51));
+    imageInfo.setMaximumSize(new Dimension(220, 60));
+    imageInfo.setMinimumSize(new Dimension(220, 60));
+    imageInfo.setName(""); // NOI18N
+    imageInfo.setOpaque(false);
+    imageInfo.setPreferredSize(new Dimension(220, 60));
+
+    GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
+    jPanel3.setLayout(jPanel3Layout);
+    jPanel3Layout.setHorizontalGroup(jPanel3Layout.createParallelGroup(Alignment.LEADING)
+      .addGroup(Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+        .addGap(0, 0, Short.MAX_VALUE)
+        .addComponent(imageInfo, GroupLayout.PREFERRED_SIZE, 220, GroupLayout.PREFERRED_SIZE)
+        .addGap(0, 0, 0))
+    );
+    jPanel3Layout.setVerticalGroup(jPanel3Layout.createParallelGroup(Alignment.LEADING)
+      .addGroup(jPanel3Layout.createSequentialGroup()
+        .addGap(0, 0, 0)
+        .addComponent(imageInfo, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE)
+        .addGap(0, 0, Short.MAX_VALUE))
+    );
+
+    GroupLayout imageTextLayerLayout = new GroupLayout(imageTextLayer);
+    imageTextLayer.setLayout(imageTextLayerLayout);
+    imageTextLayerLayout.setHorizontalGroup(imageTextLayerLayout.createParallelGroup(Alignment.LEADING)
+      .addGroup(imageTextLayerLayout.createSequentialGroup()
+        .addGap(260, 260, 260)
+        .addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+        .addContainerGap(320, Short.MAX_VALUE))
+    );
+    imageTextLayerLayout.setVerticalGroup(imageTextLayerLayout.createParallelGroup(Alignment.LEADING)
+      .addGroup(imageTextLayerLayout.createSequentialGroup()
+        .addGap(0, 0, 0)
+        .addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+        .addContainerGap(496, Short.MAX_VALUE))
+    );
+
+    jLayeredPane1.setLayer(imageTextLayer, 60);
+    jLayeredPane1.add(imageTextLayer);
+
     loadingIndicator.setMaximumSize(new Dimension(800, 556));
     loadingIndicator.setMinimumSize(new Dimension(800, 556));
     loadingIndicator.setOpaque(false);
@@ -787,6 +861,13 @@ public class Gui extends JFrame {
       }
     });
 
+    jButton1.setText("<html>Save<br>image</html>");
+    jButton1.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent evt) {
+        jButton1ActionPerformed(evt);
+      }
+    });
+
     GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
     jPanel2.setLayout(jPanel2Layout);
     jPanel2Layout.setHorizontalGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING)
@@ -812,6 +893,8 @@ public class Gui extends JFrame {
                 .addComponent(searchButton)
                 .addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(clearButton)))
+            .addPreferredGap(ComponentPlacement.RELATED)
+            .addComponent(jButton1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
             .addGap(0, 0, Short.MAX_VALUE))
           .addComponent(resultsLabel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
     );
@@ -831,11 +914,14 @@ public class Gui extends JFrame {
         .addPreferredGap(ComponentPlacement.RELATED)
         .addComponent(fixedShape)
         .addPreferredGap(ComponentPlacement.RELATED)
-        .addComponent(selectAreaBtn)
-        .addPreferredGap(ComponentPlacement.RELATED)
-        .addGroup(jPanel2Layout.createParallelGroup(Alignment.BASELINE)
-          .addComponent(searchButton)
-          .addComponent(clearButton))
+        .addGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING, false)
+          .addGroup(jPanel2Layout.createSequentialGroup()
+            .addComponent(selectAreaBtn)
+            .addPreferredGap(ComponentPlacement.RELATED)
+            .addGroup(jPanel2Layout.createParallelGroup(Alignment.BASELINE)
+              .addComponent(searchButton)
+              .addComponent(clearButton)))
+          .addComponent(jButton1))
         .addPreferredGap(ComponentPlacement.RELATED)
         .addComponent(resultsLabel, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
         .addContainerGap(24, Short.MAX_VALUE))
@@ -1221,6 +1307,44 @@ public class Gui extends JFrame {
     anchorLayer.setVisible(showAnchorCells.isSelected());
   }//GEN-LAST:event_showAnchorCellsStateChanged
 
+  private void jButton1ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    if (JFileChooser.APPROVE_OPTION == jFileChooser1.showSaveDialog(null)) {
+      File outputfile = jFileChooser1.getSelectedFile();
+      if (!outputfile.getName().endsWith(".png")) {
+        outputfile = new File(outputfile.getAbsolutePath() + ".png");
+      }
+      final BufferedImage img = new BufferedImage(jLayeredPane1.getWidth(), jLayeredPane1.getHeight(), BufferedImage.TYPE_INT_RGB);
+      backgroundLayer.paint(img.getGraphics());
+      if (hexLayer.isVisible()) {
+        hexLayer.paint(img.getGraphics());
+      }
+      if (obstacleLayer.isVisible()) {
+        obstacleLayer.paint(img.getGraphics());
+      }
+      if (passabilityLayer.isVisible()) {
+        passabilityLayer.paint(img.getGraphics());
+      }
+      if (anchorLayer.isVisible()) {
+        anchorLayer.paint(img.getGraphics());
+      }
+      boolean w = false;
+      for (Component c : warmachines.getComponents()) {
+        w |= (c.isVisible() && c.isEnabled());
+      }
+      if (w) {
+        warmachines.paint(img.getGraphics());
+      }
+      imageTextLayer.setVisible(true);
+      imageTextLayer.paint(img.getGraphics());
+      imageTextLayer.setVisible(false);
+      try {
+        ImageIO.write(img, "png", outputfile);
+      } catch (IOException ex) {
+
+      }
+    }
+  }//GEN-LAST:event_jButton1ActionPerformed
+
   //<editor-fold defaultstate="collapsed" desc=" Generated fields ">
   // Variables declaration - do not modify//GEN-BEGIN:variables
   private JPanel amLselector;
@@ -1246,11 +1370,16 @@ public class Gui extends JFrame {
   private JButton flipVbtn;
   private JScrollPane helpTextPanel;
   private JPanel hexLayer;
+  private JTextPane imageInfo;
+  private JPanel imageTextLayer;
+  private JButton jButton1;
+  private JFileChooser jFileChooser1;
   private JLabel jLabel1;
   private JLabel jLabel2;
   private JLayeredPane jLayeredPane1;
   private JPanel jPanel1;
   private JPanel jPanel2;
+  private JPanel jPanel3;
   private JScrollPane jScrollPane1;
   private JTable jTable1;
   private JTextPane jTextPane1;
@@ -1285,6 +1414,12 @@ public class Gui extends JFrame {
         }
       }
     } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+    }
+    try {
+      getLookAndFeelDefaults().put("defaultFont", new Font("Andale", Font.BOLD, 12));
+    } catch (Exception ex) {
+      System.out.println(ex.getMessage());
+      ex.printStackTrace();
     }
     //</editor-fold>
     invokeLater(() -> new Gui().setVisible(true));

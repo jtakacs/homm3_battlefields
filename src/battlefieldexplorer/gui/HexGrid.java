@@ -48,19 +48,19 @@ public class HexGrid {
     return grid.getOrDefault(posToHex(x, y), NONE);
   }
 
-  public Set<Integer> getPattern() {
+  public TreeSet<Integer> getPattern() {
     return getPattern(ENABLED);
   }
 
-  public Set<Integer> getPatternMask() {
+  public TreeSet<Integer> getPatternMask() {
     return getPattern(DISABLED);
   }
 
-  private Set<Integer> getPattern(final HexCellState state) {
+  private TreeSet<Integer> getPattern(final HexCellState state) {
     if (state == null) {
       throw new IllegalArgumentException();
     }
-    final Set<Integer> result = new TreeSet<>();
+    final TreeSet<Integer> result = new TreeSet<>();
     for (int i = 0; i < BFIELD_SIZE; i++) {
       if (grid.containsKey(i)) {
         if (state.equals(grid.get(i))) {

@@ -3,12 +3,9 @@ package battlefieldexplorer.generator;
 import static battlefieldexplorer.util.Constants.BFIELD_SIZE;
 import static battlefieldexplorer.util.Constants.BFIELD_WIDTH;
 import static battlefieldexplorer.util.HexTools.calcBitMask;
-import static java.math.BigInteger.ONE;
-import static java.math.BigInteger.ZERO;
 import static java.util.Collections.unmodifiableSet;
 import battlefieldexplorer.search.SearchParams;
 import battlefieldexplorer.search.SearchPattern;
-import java.math.BigInteger;
 import java.util.*;
 
 public final class Battlefield {
@@ -19,7 +16,7 @@ public final class Battlefield {
   public final List<PositionedObstacle> obstacles = new ArrayList<>();
   private Set<Integer> blocked = null;
   private final int coveredArea;
-  private BigInteger obstacleMask = null;
+  private BitVector obstacleMask = null;
 
   public Battlefield(final int mapX, final int mapY, final Terrain terrain, final List<PositionedObstacle> obstacles) {
     this.mapX = mapX;
@@ -46,11 +43,11 @@ public final class Battlefield {
     return blocked;
   }
 
-  public BigInteger getObstacleMask() {
+  public BitVector getObstacleMask() {
     if (obstacleMask == null) {
       obstacleMask = calcBitMask(getBlockedHexes());
     }
-    return obstacleMask;
+    return (BitVector) obstacleMask.clone();
   }
 
   public String getRawMask() {
@@ -77,9 +74,11 @@ public final class Battlefield {
     return false;
   }
 
-  private boolean compare(final BigInteger blocked, final BigInteger empty, final boolean fixed) {
+  private boolean compare(final BitVector blocked, final BitVector empty, final boolean fixed) {
+    final BitVector tmp1 = getObstacleMask();
     for (int i = 0; i < BFIELD_SIZE - BFIELD_WIDTH; i++) {
-      final BigInteger tmp = getObstacleMask().shiftRight(i);
+      final BitVector tmp = (BitVector) tmp1.clone();
+      tmp.shiftRight(i);
       if (tmp.and(blocked).equals(blocked)
           && tmp.andNot(empty).equals(tmp)) {
         return true;

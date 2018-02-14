@@ -1,14 +1,13 @@
 package battlefieldexplorer.util;
 
 import static battlefieldexplorer.util.Constants.*;
-import static java.math.BigInteger.ONE;
-import java.math.BigInteger;
+import battlefieldexplorer.generator.BitVector;
 import java.util.*;
 
 public class HexTools {
 
-  public static final BigInteger calcBitMask(final Set<Integer> obstacle) {
-    BigInteger mask = BigInteger.ZERO;
+  public static final BitVector calcBitMask(final Set<Integer> obstacle) {
+    BitVector mask = new BitVector();
     final List<Integer> blocked = new ArrayList<>();
     for (final int hex : obstacle) {
       blocked.add(distort(hex));
@@ -16,9 +15,9 @@ public class HexTools {
     Collections.sort(blocked);
     for (int i = BFIELD_SIZE - 1; i >= 0; i--) {
       if (blocked.contains(i)) {
-        mask = mask.or(ONE);
+        mask.set(0);
       }
-      mask = mask.shiftLeft(1);
+      mask.shiftLeft(1);
     }
     return mask;
   }
