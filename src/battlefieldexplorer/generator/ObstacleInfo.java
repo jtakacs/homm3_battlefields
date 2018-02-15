@@ -50,7 +50,7 @@ public final class ObstacleInfo {
 
     @Override
     public Obstacle parseLine(final String line) {
-      final String[] split = line.split(";");
+      final String[] split = line.split(",");
       return Obstacle
               .obstacleID(parseInt(split[0]))
               .absolute(parseBoolean(split[1]))
@@ -60,7 +60,7 @@ public final class ObstacleInfo {
               .width(parseInt(split[5]))
               .height(parseInt(split[6]))
               .image(split[7])
-              .cells(toNumberList(split[8], ",", Integer::parseInt));
+              .cells(toNumberList(split[8], ";", Integer::parseInt));
     }
   }
 

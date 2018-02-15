@@ -3,6 +3,7 @@ package battlefieldexplorer.gui;
 import static battlefieldexplorer.util.Constants.BFIELD_HEIGHT;
 import static battlefieldexplorer.util.Constants.BFIELD_WIDTH;
 import static battlefieldexplorer.util.Constants.MAP_SIZE;
+import static battlefieldexplorer.util.Constants.ShipToShip;
 import static battlefieldexplorer.util.HexTools.hexIsVisible;
 import static battlefieldexplorer.util.HexTools.isOddRow;
 import static battlefieldexplorer.util.HexTools.posToHex;
@@ -104,6 +105,7 @@ public class Gui extends JFrame {
     imageInfo.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
     imageInfo.setBackground(new Color(0, 0, 0, 0));
     imageTextLayer.setVisible(false);
+    setPassability(ShipToShip);
     new Thread(() -> {
       BattleFieldInfo.load();
       invokeLater(() -> {
@@ -789,7 +791,7 @@ public class Gui extends JFrame {
     jTextPane1.setEditable(false);
     jTextPane1.setBorder(null);
     jTextPane1.setContentType("text/html"); // NOI18N
-    jTextPane1.setText("<html>\n  <head>\n<style>\nmargin:0;\npadding:0;\n</style>\n  </head>\n  <body>\n    <table>\n<tr><td><b>W, S:</b></td><td> change Y position</td></tr>\n<tr><td><b>A, D:</b></td><td> change X position</td></tr>\n<tr><td><b>T, G:</b></td><td> change terrain</td></tr>\n<tr><td><b>O:</b></td><td> toggle obstacles</td></tr>\n<tr><td><b>P:</b></td><td> toggle passability</td></tr>\n<tr><td><b>H: </b></td><td> toggle hex layer</td></tr>\n    </table>\n  </body>\n</html>\n"); // NOI18N
+    jTextPane1.setText("<html>\n  <head>\n<style>\nmargin:0;\npadding:0;\n</style>\n  </head>\n  <body>\n    <table>\n<tr><td><b>W, S:</b></td><td> change Y position</td></tr>\n<tr><td><b>A, D:</b></td><td> change X position</td></tr>\n<tr><td><b>T, G:</b></td><td> change terrain</td></tr>\n<tr><td><b>O:</b></td><td> toggle obstacles</td></tr>\n<tr><td><b>P:</b></td><td> toggle passability</td></tr>\n<tr><td><b>H: </b></td><td> toggle hex layer</td></tr>\n<tr><td><b>C: </b></td><td> clear hex grid</td></tr>\n<tr><td><b>M: </b></td><td> show war machines</td></tr>\n<tr><td><b>L: </b></td><td> show anchor cells</td></tr>\n\n    </table>\n  </body>\n</html>\n"); // NOI18N
     jTextPane1.setMaximumSize(new Dimension(220, 100));
     jTextPane1.setMinimumSize(new Dimension(220, 100));
     jTextPane1.setRequestFocusEnabled(false);
@@ -1039,6 +1041,17 @@ public class Gui extends JFrame {
       }
       case KeyEvent.VK_D: {
         mapX.increment();
+        return true;
+      }
+      case KeyEvent.VK_M: {
+        showWarmachines.setSelected(!showWarmachines.isSelected());
+//        warmachines.setVisible(showWarmachines.isSelected());
+        showWarmachinesActionPerformed(null);
+        return true;
+      }
+      case KeyEvent.VK_L: {
+        showAnchorCells.setSelected(!showAnchorCells.isSelected());
+        anchorLayer.setVisible(showAnchorCells.isSelected());
         return true;
       }
       default:
