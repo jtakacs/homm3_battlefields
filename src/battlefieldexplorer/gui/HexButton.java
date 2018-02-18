@@ -54,6 +54,8 @@ public class HexButton extends JButton {
     setText("" + posToHex(x, y));
     setVerifyInputWhenFocusTarget(false);
     setInheritsPopupMenu(false);
+    setFocusable(false);
+    setFocusPainted(false);
   }
 
   public void addToContainer(final JComponent container, final int posX, final int posY) {

@@ -1,7 +1,6 @@
 package battlefieldexplorer.gui;
 
 import battlefieldexplorer.generator.Battlefield;
-import battlefieldexplorer.generator.PositionedObstacle;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -26,8 +25,7 @@ public class RowSelectionListener implements ListSelectionListener {
     final int row = jTable1.getSelectedRow();
     if (row >= 0) {
       final Battlefield bf = tm.getValue(jTable1.convertRowIndexToModel(row));
-//      frame.setControlState(bf);
-      frame.displayBattlefield(bf);
+      frame.setControlState(bf);
     }
   }
 }

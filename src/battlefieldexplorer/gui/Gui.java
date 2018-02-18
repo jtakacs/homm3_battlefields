@@ -23,16 +23,18 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;
+import javax.swing.JFormattedTextField.AbstractFormatter;
 import javax.swing.JSpinner.NumberEditor;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.LineBorder;
 import javax.swing.event.*;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.NumberFormatter;
 import org.oxbow.swingbits.misc.JSearchTextField;
 import org.oxbow.swingbits.table.filter.TableRowFilterSupport;
 
@@ -73,6 +75,11 @@ public class Gui extends JFrame {
     rightFirstaidD = new MirrorIcon(GrayFilter.createDisabledImage(rightFirstaid.getImage()));
     initComponents();
     this.setIconImage(Toolkit.getDefaultToolkit().getImage(Gui.class.getResource("/Heroes_III_Icon.png")));
+    setLocationRelativeTo(null);
+    setEnabled(false);
+    imageInfo.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
+    imageInfo.setBackground(new Color(0, 0, 0, 0));
+    imageTextLayer.setVisible(false);
     Arrays.asList(
             ammocartL,
             ammocartR,
@@ -83,29 +90,25 @@ public class Gui extends JFrame {
             firstaidR,
             anchorLayer
     ).forEach(L -> L.setVisible(false));
-    setLocationRelativeTo(null);
-    setEnabled(false);
+    spinnerFixNumericInput(xSpinner);
+    spinnerFixNumericInput(ySpinner);
     loading = new Loading(loadingIndicator);
-    loading.start();
     this.hexGrid = new HexGrid();
-    jTable1.getSelectionModel().addListSelectionListener(new RowSelectionListener(jTable1, tm, rootFrame));
     HexGrid.createHexGrid(hexLayer, hexGrid);
+    setPassability(ShipToShip);
+    jTable1.getSelectionModel().addListSelectionListener(new RowSelectionListener(jTable1, tm, rootFrame));
     TableRowFilterSupport
             .forTable(jTable1)
             .actions(true)
             .searchable(true)
             .apply();
-    KeyboardFocusManager.getCurrentKeyboardFocusManager()
-            .addKeyEventDispatcher(e -> {
-              if (KeyEvent.KEY_RELEASED == e.getID()) {
-                return keyNavigation(e);
-              }
-              return false;
-            });
-    imageInfo.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
-    imageInfo.setBackground(new Color(0, 0, 0, 0));
-    imageTextLayer.setVisible(false);
-    setPassability(ShipToShip);
+    setupKeyNavigation();
+  }
+
+  @Override
+  public void setVisible(boolean b) {
+    super.setVisible(b);
+    loading.start();
     new Thread(() -> {
       BattleFieldInfo.load();
       invokeLater(() -> {
@@ -115,12 +118,52 @@ public class Gui extends JFrame {
     }).start();
   }
 
+  private void setupKeyNavigation() {
+    DefaultKeyboardFocusManager
+            .getCurrentKeyboardFocusManager().
+            addKeyEventPostProcessor(e -> {
+              if (e.isConsumed()) {
+                return true;
+              }
+              Object s = e.getSource();
+              if (s instanceof Component) {
+                //showParents((Component) s);
+                if (SwingUtilities.isDescendingFrom((Component) s, rootFrame)) {
+                  if (s instanceof JSearchTextField) {
+                    return true;
+                  }
+                  if (KeyEvent.KEY_RELEASED == e.getID()) {
+                    //System.out.println("" + s.getClass().getCanonicalName());
+                    keyNavigation(e);
+                  }
+                }
+              }
+              return true;
+            });
+  }
+
+  public static void showParents(Component c) {
+    if (c != null) {
+      System.out.println("" + c.getClass().getCanonicalName());
+      showParents(c.getParent());
+    }
+  }
+
+  public static void spinnerFixNumericInput(final JSpinner s) {
+    JComponent editor = s.getEditor();
+    if (editor instanceof NumberEditor) {
+      AbstractFormatter formatter = ((NumberEditor) editor).getTextField().getFormatter();
+      if (formatter instanceof NumberFormatter) {
+        ((NumberFormatter) formatter).setAllowsInvalid(false);
+      }
+    }
+  }
+
   public void loadBattleField() {
     TerrainInfo.instance()
             .get(terrainList.getSelectedIndex())
-            .ifPresent(terrain -> displayBattlefield(
-            BattleFieldInfo.load().get(mapX.value(), mapY.value(), terrain))
-            );
+            .ifPresent(terrain
+                    -> displayBattlefield(BattleFieldInfo.load().get(mapX.value(), mapY.value(), terrain)));
   }
 
   public void displayBattlefield(final Battlefield bf) {
@@ -155,14 +198,20 @@ public class Gui extends JFrame {
   private void setAnchors(java.util.List<PositionedObstacle> obstacles) {
     AnchorCells.createOverlay(anchorLayer, obstacles);
   }
+  private AtomicBoolean asdf = new AtomicBoolean(true);
 
   public void setControlState(final Battlefield bf) {
-    xSpinner.setValue(bf.mapX);
-    ySpinner.setValue(bf.mapY);
-    terrainList.getSelectionModel().setSelectionInterval(0, bf.terrain.ID);
-    xSpinner.updateUI();
-    ySpinner.updateUI();
-    terrainList.updateUI();
+    asdf.set(false);
+    invokeLater(() -> {
+      xSpinner.setValue(bf.mapX);
+      ySpinner.setValue(bf.mapY);
+      terrainList.getSelectionModel().setSelectionInterval(bf.terrain.ID, bf.terrain.ID);
+      xSpinner.updateUI();
+      ySpinner.updateUI();
+      terrainList.updateUI();
+      displayBattlefield(bf);
+      asdf.set(true);
+    });
   }
 
   private void clearHexGrid() {
@@ -278,6 +327,7 @@ public class Gui extends JFrame {
     terrainList.setModel(TerrainInfo.instance());
     terrainList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     terrainList.setDoubleBuffered(true);
+    terrainList.setFocusable(false);
     terrainList.setMaximumSize(new Dimension(150, 85));
     terrainList.setMinimumSize(new Dimension(150, 85));
     terrainList.setPreferredSize(new Dimension(150, 85));
@@ -305,6 +355,7 @@ public class Gui extends JFrame {
 
     xSpinner.setModel(mapX);
     xSpinner.setEditor(new NumberEditor(xSpinner, ""));
+    xSpinner.setFocusable(false);
     xSpinner.setMaximumSize(new Dimension(56, 20));
     xSpinner.setRequestFocusEnabled(false);
     xSpinner.addChangeListener(new ChangeListener() {
@@ -317,6 +368,7 @@ public class Gui extends JFrame {
 
     ySpinner.setModel(mapY);
     ySpinner.setEditor(new NumberEditor(ySpinner, ""));
+    ySpinner.setFocusable(false);
     ySpinner.setMaximumSize(new Dimension(56, 20));
     ySpinner.setRequestFocusEnabled(false);
     ySpinner.addChangeListener(new ChangeListener() {
@@ -327,6 +379,7 @@ public class Gui extends JFrame {
 
     showHex.setSelected(true);
     showHex.setText("Show hex grid");
+    showHex.setFocusable(false);
     showHex.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent evt) {
         showHexStateChanged(evt);
@@ -335,6 +388,7 @@ public class Gui extends JFrame {
 
     showObst.setSelected(true);
     showObst.setText("Show obstacles");
+    showObst.setFocusable(false);
     showObst.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent evt) {
         showObstStateChanged(evt);
@@ -343,6 +397,7 @@ public class Gui extends JFrame {
 
     showBlocked.setSelected(true);
     showBlocked.setText("Passability");
+    showBlocked.setFocusable(false);
     showBlocked.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent evt) {
         showBlockedStateChanged(evt);
@@ -350,6 +405,7 @@ public class Gui extends JFrame {
     });
 
     showWarmachines.setText("War machines");
+    showWarmachines.setFocusable(false);
     showWarmachines.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent evt) {
         showWarmachinesActionPerformed(evt);
@@ -357,6 +413,7 @@ public class Gui extends JFrame {
     });
 
     showAnchorCells.setText("Show anchor cells");
+    showAnchorCells.setFocusable(false);
     showAnchorCells.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent evt) {
         showAnchorCellsStateChanged(evt);
@@ -723,11 +780,14 @@ public class Gui extends JFrame {
     jLayeredPane1.setLayer(warmachines, 50);
     jLayeredPane1.add(warmachines);
 
+    imageTextLayer.setFocusable(false);
     imageTextLayer.setMaximumSize(new Dimension(800, 556));
     imageTextLayer.setMinimumSize(new Dimension(800, 556));
     imageTextLayer.setName(""); // NOI18N
     imageTextLayer.setOpaque(false);
     imageTextLayer.setPreferredSize(new Dimension(800, 556));
+    imageTextLayer.setRequestFocusEnabled(false);
+    imageTextLayer.setVerifyInputWhenFocusTarget(false);
 
     jPanel3.setBackground(new Color(0,0,0,80));
 
@@ -775,6 +835,7 @@ public class Gui extends JFrame {
     jLayeredPane1.setLayer(imageTextLayer, 60);
     jLayeredPane1.add(imageTextLayer);
 
+    loadingIndicator.setFocusable(false);
     loadingIndicator.setMaximumSize(new Dimension(800, 556));
     loadingIndicator.setMinimumSize(new Dimension(800, 556));
     loadingIndicator.setOpaque(false);
@@ -800,6 +861,7 @@ public class Gui extends JFrame {
     jPanel2.setBorder(new LineBorder(new Color(0, 0, 0), 1, true));
 
     flipVbtn.setText("Flip vertically");
+    flipVbtn.setFocusable(false);
     flipVbtn.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent evt) {
         flipVbtnActionPerformed(evt);
@@ -807,6 +869,7 @@ public class Gui extends JFrame {
     });
 
     flipHbtn.setText("Flip Horizontally");
+    flipHbtn.setFocusable(false);
     flipHbtn.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent evt) {
         flipHbtnActionPerformed(evt);
@@ -814,16 +877,14 @@ public class Gui extends JFrame {
     });
 
     searchMirrorV.setText("while searching");
-    searchMirrorV.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent evt) {
-        searchMirrorVActionPerformed(evt);
-      }
-    });
+    searchMirrorV.setFocusable(false);
 
     searchMirrorH.setText("while searching");
+    searchMirrorH.setFocusable(false);
 
     fixedShape.setText("Search for exact position match");
     fixedShape.setToolTipText("");
+    fixedShape.setFocusable(false);
     fixedShape.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent evt) {
         fixedShapeActionPerformed(evt);
@@ -831,6 +892,7 @@ public class Gui extends JFrame {
     });
 
     searchButton.setText("Search");
+    searchButton.setFocusable(false);
     searchButton.addMouseListener(new MouseAdapter() {
       public void mouseExited(MouseEvent evt) {
         searchButtonMouseExited(evt);
@@ -846,6 +908,7 @@ public class Gui extends JFrame {
     });
 
     clearButton.setText("Clear grid");
+    clearButton.setFocusable(false);
     clearButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent evt) {
         clearButtonActionPerformed(evt);
@@ -857,6 +920,7 @@ public class Gui extends JFrame {
     resultsLabel.setMaximumSize(new Dimension(300, 15));
 
     selectAreaBtn.setText("Select map area to search");
+    selectAreaBtn.setFocusable(false);
     selectAreaBtn.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent evt) {
         selectAreaBtnActionPerformed(evt);
@@ -864,6 +928,7 @@ public class Gui extends JFrame {
     });
 
     jButton1.setText("<html>Save<br>image</html>");
+    jButton1.setFocusable(false);
     jButton1.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent evt) {
         jButton1ActionPerformed(evt);
@@ -966,7 +1031,9 @@ public class Gui extends JFrame {
   }// </editor-fold>//GEN-END:initComponents
 
   private void terrainListValueChanged(ListSelectionEvent evt) {//GEN-FIRST:event_terrainListValueChanged
-    loadBattleField();
+    if (asdf.get()) {
+      loadBattleField();
+    }
   }//GEN-LAST:event_terrainListValueChanged
 
   private void searchButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
@@ -989,16 +1056,19 @@ public class Gui extends JFrame {
   }//GEN-LAST:event_clearButtonActionPerformed
 
   private void xSpinnerStateChanged(ChangeEvent evt) {//GEN-FIRST:event_xSpinnerStateChanged
-    loadBattleField();
+    if (asdf.get()) {
+      loadBattleField();
+    }
   }//GEN-LAST:event_xSpinnerStateChanged
 
   private void ySpinnerStateChanged(ChangeEvent evt) {//GEN-FIRST:event_ySpinnerStateChanged
-    loadBattleField();
+    if (asdf.get()) {
+      loadBattleField();
+    }
   }//GEN-LAST:event_ySpinnerStateChanged
 
-  //<editor-fold defaultstate="collapsed" desc="keyNavigation">
   private boolean keyNavigation(final KeyEvent evt) {
-//    System.out.println(evt.getComponent());
+    //<editor-fold defaultstate="collapsed" desc="keyNavigation">
     switch (evt.getKeyCode()) {
       case KeyEvent.VK_P: {
         showBlocked.setSelected(!showBlocked.isSelected());
@@ -1045,7 +1115,6 @@ public class Gui extends JFrame {
       }
       case KeyEvent.VK_M: {
         showWarmachines.setSelected(!showWarmachines.isSelected());
-//        warmachines.setVisible(showWarmachines.isSelected());
         showWarmachinesActionPerformed(null);
         return true;
       }
@@ -1057,8 +1126,8 @@ public class Gui extends JFrame {
       default:
     }
     return false;
+    //</editor-fold>
   }
-  //</editor-fold>
 
   private void showHexStateChanged(ChangeEvent evt) {//GEN-FIRST:event_showHexStateChanged
     hexLayer.setVisible(showHex.isSelected());
@@ -1222,6 +1291,7 @@ public class Gui extends JFrame {
   }//GEN-LAST:event_amRselectorMouseExited
 
   private void flipVbtnActionPerformed(ActionEvent evt) {//GEN-FIRST:event_flipVbtnActionPerformed
+    //TODO move to HexGrid class
     final Set<Integer> pattern = hexGrid.getPattern();
     final Set<Integer> patternMask = hexGrid.getPatternMask();
     final Set<Integer> flipV = new TreeSet<>();
@@ -1245,6 +1315,7 @@ public class Gui extends JFrame {
   }//GEN-LAST:event_flipVbtnActionPerformed
 
   private void flipHbtnActionPerformed(ActionEvent evt) {//GEN-FIRST:event_flipHbtnActionPerformed
+    //TODO move to HexGrid class
     final Set<Integer> pattern = hexGrid.getPattern();
     final Set<Integer> patternMask = hexGrid.getPatternMask();
     final Set<Integer> flipH = new TreeSet<>();
@@ -1273,10 +1344,6 @@ public class Gui extends JFrame {
     updateHexGrid();
   }//GEN-LAST:event_flipHbtnActionPerformed
 
-  private void searchMirrorVActionPerformed(ActionEvent evt) {//GEN-FIRST:event_searchMirrorVActionPerformed
-    // TODO add your handling code here:
-  }//GEN-LAST:event_searchMirrorVActionPerformed
-
   private void showWarmachinesActionPerformed(ActionEvent evt) {//GEN-FIRST:event_showWarmachinesActionPerformed
     final boolean w = showWarmachines.isSelected();
     Arrays.asList(
@@ -1304,11 +1371,8 @@ public class Gui extends JFrame {
 
   private void selectAreaBtnActionPerformed(ActionEvent evt) {//GEN-FIRST:event_selectAreaBtnActionPerformed
     invokeLater(() -> {
-      SelectAreaDialog dialog = new SelectAreaDialog(rootFrame, area);
+      SelectAreaDialog dialog = new SelectAreaDialog(area);
       dialog.setVisible(true);
-      System.out.println("CONFIRM: " + dialog.isConfirmed());
-      System.out.println("FULL: " + dialog.isFullmap());
-      System.out.println("rect: " + dialog.getArea());
       if (dialog.isConfirmed()) {
         area = dialog.getArea();
       }

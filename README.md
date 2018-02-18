@@ -16,9 +16,10 @@
 * **War machine display** - visual aid mainly for fixed patterns
 * **Anchor cell display** - if you wonder, why can't you put a force field on some cells.
 * **HDmod plugin to hook into the real battlefield generator** - test was successful.
+* **Keyboard event filter** - you can now enter wasd into text fields without side effects
+* **BigIntegers were replaced with BitVector** - search is approximately 10x faster
 
 #todo
 
-* keyboard event listener bug
 * non standard large map support
 * HotA new terrains support

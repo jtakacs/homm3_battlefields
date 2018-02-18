@@ -16,31 +16,30 @@ public class Loading {
   public Loading(final JPanel panel) {
     this.panel = panel;
     Arrays.asList(
-      "Sp01_01.png",
-      "Sp01_02.png",
-      "Sp01_03.png",
-      "Sp01_04.png",
-      "Sp01_05.png",
-      "Sp01_06.png",
-      "Sp01_07.png",
-      "Sp01_08.png",
-      "Sp01_09.png",
-      "Sp01_10.png",
-      "Sp01_11.png",
-      "Sp01_12.png",
-      "Sp01_13.png",
-      "Sp01_14.png",
-      "Sp01_15.png",
-      "Sp01_16.png",
-      "Sp01_17.png",
-      "Sp01_18.png",
-      "Sp01_19.png",
-      "Sp01_20.png")
-      .forEach(f -> frames.add(new ImageIcon(Loading.class.getResource("/loading/" + f))));
+            "Sp01_01.png",
+            "Sp01_02.png",
+            "Sp01_03.png",
+            "Sp01_04.png",
+            "Sp01_05.png",
+            "Sp01_06.png",
+            "Sp01_07.png",
+            "Sp01_08.png",
+            "Sp01_09.png",
+            "Sp01_10.png",
+            "Sp01_11.png",
+            "Sp01_12.png",
+            "Sp01_13.png",
+            "Sp01_14.png",
+            "Sp01_15.png",
+            "Sp01_16.png",
+            "Sp01_17.png",
+            "Sp01_18.png",
+            "Sp01_19.png",
+            "Sp01_20.png")
+            .forEach(icon -> frames.add(new ImageIcon(Loading.class.getResource("/loading/" + icon))));
     w = frames.get(0).getIconWidth();
     h = frames.get(0).getIconHeight();
     addToPanel();
-    new Thread(this::drawFrames).start();
   }
 
   private final void addToPanel() {
@@ -50,6 +49,7 @@ public class Loading {
       jLabel1.setBounds((panel.getWidth() - w) / 2, (panel.getHeight() - h) / 2, w, h);
       jLabel1.setVisible(false);
     }
+    new Thread(this::drawFrames).start();
   }
 
   public void start() {

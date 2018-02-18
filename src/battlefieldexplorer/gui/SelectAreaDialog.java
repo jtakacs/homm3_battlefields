@@ -1,5 +1,6 @@
 package battlefieldexplorer.gui;
 
+import static battlefieldexplorer.gui.Gui.spinnerFixNumericInput;
 import static battlefieldexplorer.util.Constants.MAP_SIZE;
 import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -8,7 +9,6 @@ import static javax.swing.UIManager.getInstalledLookAndFeels;
 import static javax.swing.UIManager.setLookAndFeel;
 import battlefieldexplorer.util.FileDropHandler;
 import battlefieldexplorer.util.FileUtil;
-import java.awt.Frame;
 import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +17,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.UIManager.LookAndFeelInfo;
 
 public class SelectAreaDialog extends JDialog {
@@ -34,9 +35,13 @@ public class SelectAreaDialog extends JDialog {
   private boolean confirmed = false;
   private boolean fullmap = true;
 
-  public SelectAreaDialog(final Frame parent, final Rectangle area) {
-    super(parent, true);
+  public SelectAreaDialog(final Rectangle area) {
+    super(new JFrame(), true);
     initComponents();
+    spinnerFixNumericInput(btmSpinner);
+    spinnerFixNumericInput(leftSpinner);
+    spinnerFixNumericInput(rightSpinner);
+    spinnerFixNumericInput(topSpinner);
     final Rectangle r;
     if (area.x > -1 && area.y > -1 && area.width > -1 && area.height > -1) {
       r = new Rectangle(5 * area.x, 5 * area.y, 5 * (area.width - area.x), 5 * (area.height - area.y));
@@ -455,7 +460,7 @@ public class SelectAreaDialog extends JDialog {
     } catch (Exception ex) {
     }
     invokeLater(() -> {
-      SelectAreaDialog dialog = new SelectAreaDialog(new javax.swing.JFrame(), new Rectangle(-1, -1, -1, -1));
+      SelectAreaDialog dialog = new SelectAreaDialog(new Rectangle(-1, -1, -1, -1));
       dialog.setVisible(true);
       System.out.println("CONFIRM: " + dialog.isConfirmed());
       System.out.println("FULL: " + dialog.isFullmap());

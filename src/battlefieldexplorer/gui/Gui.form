@@ -168,6 +168,7 @@
                 </Property>
                 <Property name="selectionMode" type="int" value="0"/>
                 <Property name="doubleBuffered" type="boolean" value="true"/>
+                <Property name="focusable" type="boolean" value="false"/>
                 <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                   <Dimension value="[150, 85]"/>
                 </Property>
@@ -205,6 +206,7 @@
             <Property name="editor" type="javax.swing.JComponent" editor="org.netbeans.modules.form.editors.SpinnerEditorEditor">
               <SpinnerEditor format="" type="3"/>
             </Property>
+            <Property name="focusable" type="boolean" value="false"/>
             <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[56, 20]"/>
             </Property>
@@ -227,6 +229,7 @@
             <Property name="editor" type="javax.swing.JComponent" editor="org.netbeans.modules.form.editors.SpinnerEditorEditor">
               <SpinnerEditor format="" type="3"/>
             </Property>
+            <Property name="focusable" type="boolean" value="false"/>
             <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[56, 20]"/>
             </Property>
@@ -240,6 +243,7 @@
           <Properties>
             <Property name="selected" type="boolean" value="true"/>
             <Property name="text" type="java.lang.String" value="Show hex grid"/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="showHexStateChanged"/>
@@ -249,6 +253,7 @@
           <Properties>
             <Property name="selected" type="boolean" value="true"/>
             <Property name="text" type="java.lang.String" value="Show obstacles"/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="showObstStateChanged"/>
@@ -258,6 +263,7 @@
           <Properties>
             <Property name="selected" type="boolean" value="true"/>
             <Property name="text" type="java.lang.String" value="Passability"/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="showBlockedStateChanged"/>
@@ -266,6 +272,7 @@
         <Component class="javax.swing.JCheckBox" name="showWarmachines">
           <Properties>
             <Property name="text" type="java.lang.String" value="War machines"/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showWarmachinesActionPerformed"/>
@@ -274,6 +281,7 @@
         <Component class="javax.swing.JCheckBox" name="showAnchorCells">
           <Properties>
             <Property name="text" type="java.lang.String" value="Show anchor cells"/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="showAnchorCellsStateChanged"/>
@@ -824,6 +832,7 @@
         </Container>
         <Container class="javax.swing.JPanel" name="imageTextLayer">
           <Properties>
+            <Property name="focusable" type="boolean" value="false"/>
             <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[800, 556]"/>
             </Property>
@@ -835,6 +844,8 @@
             <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[800, 556]"/>
             </Property>
+            <Property name="requestFocusEnabled" type="boolean" value="false"/>
+            <Property name="verifyInputWhenFocusTarget" type="boolean" value="false"/>
           </Properties>
           <AuxValues>
             <AuxValue name="JLayeredPane.layer" type="java.lang.Integer" value="60"/>
@@ -923,6 +934,7 @@
         </Container>
         <Container class="javax.swing.JPanel" name="loadingIndicator">
           <Properties>
+            <Property name="focusable" type="boolean" value="false"/>
             <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[800, 556]"/>
             </Property>
@@ -1105,6 +1117,7 @@
         <Component class="javax.swing.JButton" name="flipVbtn">
           <Properties>
             <Property name="text" type="java.lang.String" value="Flip vertically"/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="flipVbtnActionPerformed"/>
@@ -1113,6 +1126,7 @@
         <Component class="javax.swing.JButton" name="flipHbtn">
           <Properties>
             <Property name="text" type="java.lang.String" value="Flip Horizontally"/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="flipHbtnActionPerformed"/>
@@ -1121,20 +1135,20 @@
         <Component class="javax.swing.JCheckBox" name="searchMirrorV">
           <Properties>
             <Property name="text" type="java.lang.String" value="while searching"/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="searchMirrorVActionPerformed"/>
-          </Events>
         </Component>
         <Component class="javax.swing.JCheckBox" name="searchMirrorH">
           <Properties>
             <Property name="text" type="java.lang.String" value="while searching"/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JCheckBox" name="fixedShape">
           <Properties>
             <Property name="text" type="java.lang.String" value="Search for exact position match"/>
             <Property name="toolTipText" type="java.lang.String" value=""/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="fixedShapeActionPerformed"/>
@@ -1143,6 +1157,7 @@
         <Component class="javax.swing.JButton" name="searchButton">
           <Properties>
             <Property name="text" type="java.lang.String" value="Search"/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="mouseExited" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="searchButtonMouseExited"/>
@@ -1153,6 +1168,7 @@
         <Component class="javax.swing.JButton" name="clearButton">
           <Properties>
             <Property name="text" type="java.lang.String" value="Clear grid"/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="clearButtonActionPerformed"/>
@@ -1174,6 +1190,7 @@
         <Component class="javax.swing.JButton" name="selectAreaBtn">
           <Properties>
             <Property name="text" type="java.lang.String" value="Select map area to search"/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="selectAreaBtnActionPerformed"/>
@@ -1182,6 +1199,7 @@
         <Component class="javax.swing.JButton" name="jButton1">
           <Properties>
             <Property name="text" type="java.lang.String" value="&lt;html&gt;Save&lt;br&gt;image&lt;/html&gt;"/>
+            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton1ActionPerformed"/>
