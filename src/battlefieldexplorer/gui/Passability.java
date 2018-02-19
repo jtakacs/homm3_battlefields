@@ -83,7 +83,11 @@ public class Passability {
     System.out.println("<table>");
     for (Obstacle o : obstacleInfo().all()) {
       Color c = stringToColor(o.image);
-      System.out.println("<tr><td>" + o.ID + "</td><td>" + o.image + "</td><td><div style='width:20px;height:20px;background-color:rgba(" + c.getRed() + "," + c.getGreen() + "," + c.getBlue() + ",1.0" + ");'</div></td></tr>");
+      String color = String.format("%02X%02X%02X", c.getRed(), c.getBlue(), c.getGreen());
+      System.out.println(
+              "<tr><td>" + o.ID + "</td><td>" + o.image + "</td><td>"
+              + "![#" + color + "](https://placehold.it/15/f03c15/000000?text=+) `#" + color + "`"
+              + "</td></tr>");
     }
     System.out.println("</table>");
   }
