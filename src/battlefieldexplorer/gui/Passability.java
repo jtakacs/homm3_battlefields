@@ -86,7 +86,7 @@ public class Passability {
       String color = String.format("%02X%02X%02X", c.getRed(), c.getBlue(), c.getGreen());
       System.out.println(
               "<tr><td>" + o.ID + "</td><td>" + o.image + "</td><td>"
-              + "![#" + color + "](https://placehold.it/15/f03c15/000000?text=+) `#" + color + "`"
+              + "![#" + color + "](https://placehold.it/15/" + color + "/000000?text=+) `#" + color + "`"
               + "</td></tr>");
     }
     System.out.println("</table>");
