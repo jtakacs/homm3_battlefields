@@ -1,3 +1,5 @@
+![#7E3311](http://placehold.it/15/7E3311/7E3311) `#7E3311`
+
 <table>
 <tr><td> 0</td><td>obdino1.png </td><td>![#7E3311](http://placehold.it/15/7E3311/7E3311) `#7E3311`</td></tr>
 <tr><td> 1</td><td>obdino2.png </td><td>![#8CB428](http://placehold.it/15/8CB428/8CB428) `#8CB428`</td></tr>
