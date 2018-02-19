@@ -83,7 +83,7 @@ public class Passability {
     System.out.println("<table>");
     for (Obstacle o : obstacleInfo().all()) {
       Color c = stringToColor(o.image);
-      System.out.println("<tr><td>" + o.ID + "</td><td>" + o.image + "</td><td><div style='width:20px;height:20px;background-color:rgba(" + c.getRed() + "," + c.getGreen() + "," + c.getBlue() + "," + (100.0d / 255.0d) + ");'</div></td></tr>");
+      System.out.println("<tr><td>" + o.ID + "</td><td>" + o.image + "</td><td><div style='width:20px;height:20px;background-color:rgba(" + c.getRed() + "," + c.getGreen() + "," + c.getBlue() + ",1.0" + ");'</div></td></tr>");
     }
     System.out.println("</table>");
   }
