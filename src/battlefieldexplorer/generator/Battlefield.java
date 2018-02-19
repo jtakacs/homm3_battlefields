@@ -3,6 +3,7 @@ package battlefieldexplorer.generator;
 import static battlefieldexplorer.util.Constants.BFIELD_SIZE;
 import static battlefieldexplorer.util.Constants.BFIELD_WIDTH;
 import static battlefieldexplorer.util.HexTools.calcBitMask;
+import static battlefieldexplorer.util.HexTools.posToHex;
 import static java.util.Collections.unmodifiableSet;
 import battlefieldexplorer.search.SearchParams;
 import battlefieldexplorer.search.SearchPattern;
@@ -74,6 +75,16 @@ public final class Battlefield {
     return false;
   }
 
+  public PositionedObstacle getObstacleAt(int x, int y) {
+    final int hex = posToHex(x, y);
+    for (PositionedObstacle po : obstacles) {
+      if (po.getBlockedCells().contains(hex)) {
+        return po;
+      }
+    }
+    return null;
+  }
+
   private boolean compare(final BitVector blocked, final BitVector empty, final boolean fixed) {
     final BitVector tmp1 = getObstacleMask();
     for (int i = 0; i < BFIELD_SIZE - BFIELD_WIDTH; i++) {
@@ -106,4 +117,7 @@ public final class Battlefield {
     return sb.toString();
   }
 
+  public String toCSVrow() {
+    return "" + mapX + "," + mapY + "," + terrain.description + System.lineSeparator();
+  }
 }

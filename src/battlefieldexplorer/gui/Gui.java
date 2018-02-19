@@ -7,6 +7,7 @@ import static battlefieldexplorer.util.Constants.ShipToShip;
 import static battlefieldexplorer.util.HexTools.hexIsVisible;
 import static battlefieldexplorer.util.HexTools.isOddRow;
 import static battlefieldexplorer.util.HexTools.posToHex;
+import static java.awt.Toolkit.getDefaultToolkit;
 import static javax.swing.SwingConstants.LEFT;
 import static javax.swing.SwingConstants.TOP;
 import static javax.swing.SwingUtilities.invokeLater;
@@ -18,12 +19,15 @@ import battlefieldexplorer.search.*;
 import battlefieldexplorer.util.HexCellState;
 import battlefieldexplorer.util.HexTools;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;
@@ -95,7 +99,7 @@ public class Gui extends JFrame {
     loading = new Loading(loadingIndicator);
     this.hexGrid = new HexGrid();
     HexGrid.createHexGrid(hexLayer, hexGrid);
-    setPassability(ShipToShip);
+//    setPassability(ShipToShip);
     jTable1.getSelectionModel().addListSelectionListener(new RowSelectionListener(jTable1, tm, rootFrame));
     TableRowFilterSupport
             .forTable(jTable1)
@@ -118,6 +122,8 @@ public class Gui extends JFrame {
     }).start();
   }
 
+  final AtomicLong keyTime = new AtomicLong(0L);
+
   private void setupKeyNavigation() {
     DefaultKeyboardFocusManager
             .getCurrentKeyboardFocusManager().
@@ -132,7 +138,9 @@ public class Gui extends JFrame {
                   if (s instanceof JSearchTextField) {
                     return true;
                   }
-                  if (KeyEvent.KEY_RELEASED == e.getID()) {
+                  if ( //                          KeyEvent.KEY_RELEASED == e.getID()
+                          //                          KeyEvent.KEY_TYPED == e.getID()
+                          KeyEvent.KEY_PRESSED == e.getID()) {
                     //System.out.println("" + s.getClass().getCanonicalName());
                     keyNavigation(e);
                   }
@@ -172,7 +180,7 @@ public class Gui extends JFrame {
       background.setIcon(TerrainImages.getImage(bf.terrain));
       background.updateUI();
       placeObstacles(bf.obstacles);
-      setPassability(bf.getBlockedHexes());
+      setPassability(bf);
       setAnchors(bf.obstacles);
     });
   }
@@ -191,8 +199,8 @@ public class Gui extends JFrame {
     obstacleLayer.updateUI();
   }
 
-  private void setPassability(java.util.Set<Integer> obstacles) {
-    Passability.createOverlay(passabilityLayer, obstacles);
+  private void setPassability(final Battlefield bf) {
+    Passability.createOverlay(passabilityLayer, bf);
   }
 
   private void setAnchors(java.util.List<PositionedObstacle> obstacles) {
@@ -249,6 +257,7 @@ public class Gui extends JFrame {
     });
   }
 
+  // <editor-fold defaultstate="collapsed" desc="Generated Code">
   @SuppressWarnings ("unchecked")
   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
   private void initComponents() {
@@ -306,7 +315,8 @@ public class Gui extends JFrame {
     clearButton = new JButton();
     resultsLabel = new JLabel();
     selectAreaBtn = new JButton();
-    jButton1 = new JButton();
+    saveImageBtn = new JButton();
+    clipBoardBtn = new JButton();
 
     jFileChooser1.setAcceptAllFileFilterUsed(false);
     jFileChooser1.setDialogType(JFileChooser.SAVE_DIALOG);
@@ -927,11 +937,18 @@ public class Gui extends JFrame {
       }
     });
 
-    jButton1.setText("<html>Save<br>image</html>");
-    jButton1.setFocusable(false);
-    jButton1.addActionListener(new ActionListener() {
+    saveImageBtn.setText("<html>Save<br>image</html>");
+    saveImageBtn.setFocusable(false);
+    saveImageBtn.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent evt) {
-        jButton1ActionPerformed(evt);
+        saveImageBtnActionPerformed(evt);
+      }
+    });
+
+    clipBoardBtn.setText("Copy results to clipboard");
+    clipBoardBtn.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent evt) {
+        clipBoardBtnActionPerformed(evt);
       }
     });
 
@@ -953,17 +970,20 @@ public class Gui extends JFrame {
                 .addPreferredGap(ComponentPlacement.UNRELATED)
                 .addComponent(searchMirrorV)))
             .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+          .addComponent(resultsLabel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
           .addGroup(jPanel2Layout.createSequentialGroup()
-            .addGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING, false)
-              .addComponent(selectAreaBtn)
+            .addGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING)
               .addGroup(jPanel2Layout.createSequentialGroup()
-                .addComponent(searchButton)
-                .addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(clearButton)))
-            .addPreferredGap(ComponentPlacement.RELATED)
-            .addComponent(jButton1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addGap(0, 0, Short.MAX_VALUE))
-          .addComponent(resultsLabel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGroup(jPanel2Layout.createParallelGroup(Alignment.LEADING, false)
+                  .addComponent(selectAreaBtn)
+                  .addGroup(jPanel2Layout.createSequentialGroup()
+                    .addComponent(searchButton)
+                    .addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(clearButton)))
+                .addPreferredGap(ComponentPlacement.RELATED)
+                .addComponent(saveImageBtn, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+              .addComponent(clipBoardBtn))
+            .addGap(0, 0, Short.MAX_VALUE))))
     );
 
     jPanel2Layout.linkSize(SwingConstants.HORIZONTAL, new Component[] {flipHbtn, flipVbtn});
@@ -988,10 +1008,12 @@ public class Gui extends JFrame {
             .addGroup(jPanel2Layout.createParallelGroup(Alignment.BASELINE)
               .addComponent(searchButton)
               .addComponent(clearButton)))
-          .addComponent(jButton1))
+          .addComponent(saveImageBtn))
         .addPreferredGap(ComponentPlacement.RELATED)
         .addComponent(resultsLabel, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
-        .addContainerGap(24, Short.MAX_VALUE))
+        .addPreferredGap(ComponentPlacement.RELATED)
+        .addComponent(clipBoardBtn)
+        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
     );
 
     jPanel2Layout.linkSize(SwingConstants.VERTICAL, new Component[] {flipHbtn, flipVbtn, searchMirrorH, searchMirrorV});
@@ -1029,6 +1051,7 @@ public class Gui extends JFrame {
 
     pack();
   }// </editor-fold>//GEN-END:initComponents
+// </editor-fold>
 
   private void terrainListValueChanged(ListSelectionEvent evt) {//GEN-FIRST:event_terrainListValueChanged
     if (asdf.get()) {
@@ -1066,6 +1089,7 @@ public class Gui extends JFrame {
       loadBattleField();
     }
   }//GEN-LAST:event_ySpinnerStateChanged
+  private static final long keyDelay = 50;
 
   private boolean keyNavigation(final KeyEvent evt) {
     //<editor-fold defaultstate="collapsed" desc="keyNavigation">
@@ -1098,19 +1122,35 @@ public class Gui extends JFrame {
         return true;
       }
       case KeyEvent.VK_W: {
-        mapY.decrement();
+        long t = System.currentTimeMillis();
+        if (t - keyTime.get() > keyDelay) {
+          mapY.decrement();
+          keyTime.set(t);
+        }
         return true;
       }
       case KeyEvent.VK_S: {
-        mapY.increment();
+        long t = System.currentTimeMillis();
+        if (t - keyTime.get() > keyDelay) {
+          mapY.increment();
+          keyTime.set(t);
+        }
         return true;
       }
       case KeyEvent.VK_A: {
-        mapX.decrement();
+        long t = System.currentTimeMillis();
+        if (t - keyTime.get() > keyDelay) {
+          mapX.decrement();
+          keyTime.set(t);
+        }
         return true;
       }
       case KeyEvent.VK_D: {
-        mapX.increment();
+        long t = System.currentTimeMillis();
+        if (t - keyTime.get() > keyDelay) {
+          mapX.increment();
+          keyTime.set(t);
+        }
         return true;
       }
       case KeyEvent.VK_M: {
@@ -1169,6 +1209,7 @@ public class Gui extends JFrame {
     }
   }//GEN-LAST:event_faLselectorMouseExited
 
+//TODO refactor into components
   private void faLselectorMouseClicked(MouseEvent evt) {//GEN-FIRST:event_faLselectorMouseClicked
     if (showWarmachines.isSelected()) {
       showFirstaidL = !showFirstaidL;
@@ -1384,7 +1425,7 @@ public class Gui extends JFrame {
     anchorLayer.setVisible(showAnchorCells.isSelected());
   }//GEN-LAST:event_showAnchorCellsStateChanged
 
-  private void jButton1ActionPerformed(ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+  private void saveImageBtnActionPerformed(ActionEvent evt) {//GEN-FIRST:event_saveImageBtnActionPerformed
     if (JFileChooser.APPROVE_OPTION == jFileChooser1.showSaveDialog(null)) {
       File outputfile = jFileChooser1.getSelectedFile();
       if (!outputfile.getName().endsWith(".png")) {
@@ -1420,7 +1461,13 @@ public class Gui extends JFrame {
 
       }
     }
-  }//GEN-LAST:event_jButton1ActionPerformed
+  }//GEN-LAST:event_saveImageBtnActionPerformed
+
+  private void clipBoardBtnActionPerformed(ActionEvent evt) {//GEN-FIRST:event_clipBoardBtnActionPerformed
+    getDefaultToolkit()
+            .getSystemClipboard()
+            .setContents(new StringSelection(tm.toCSV()), null);
+  }//GEN-LAST:event_clipBoardBtnActionPerformed
 
   //<editor-fold defaultstate="collapsed" desc=" Generated fields ">
   // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1438,6 +1485,7 @@ public class Gui extends JFrame {
   private JPanel catLselector;
   private JLabel catapultL;
   private JButton clearButton;
+  private JButton clipBoardBtn;
   private JPanel faLselector;
   private JPanel faRselector;
   private JLabel firstaidL;
@@ -1449,7 +1497,6 @@ public class Gui extends JFrame {
   private JPanel hexLayer;
   private JTextPane imageInfo;
   private JPanel imageTextLayer;
-  private JButton jButton1;
   private JFileChooser jFileChooser1;
   private JLabel jLabel1;
   private JLabel jLabel2;
@@ -1464,6 +1511,7 @@ public class Gui extends JFrame {
   private JPanel obstacleLayer;
   private JPanel passabilityLayer;
   private JLabel resultsLabel;
+  private JButton saveImageBtn;
   private JButton searchButton;
   private JCheckBox searchMirrorH;
   private JCheckBox searchMirrorV;

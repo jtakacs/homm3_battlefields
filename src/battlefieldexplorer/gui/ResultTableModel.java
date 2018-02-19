@@ -73,4 +73,10 @@ public class ResultTableModel extends AbstractTableModel {
     return data.get(rowIndex);
   }
 
+  public String toCSV() {
+    final StringBuilder sb = new StringBuilder();
+    data.stream().forEach(bf -> sb.append(bf.toCSVrow()));
+    return sb.toString();
+  }
+
 }

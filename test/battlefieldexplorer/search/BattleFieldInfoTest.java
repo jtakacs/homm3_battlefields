@@ -12,6 +12,7 @@ public class BattleFieldInfoTest {
 
   @Test
   public void testGenerator() {
+    long start = System.currentTimeMillis();
     final BattleFieldInfo info = BattleFieldInfo.load();
     /*
     This file was generated with the game's original obstacle placement algorithm,
@@ -25,6 +26,7 @@ public class BattleFieldInfoTest {
                       info.get(line.mapX, line.mapY, line.terrain).getRawMask()
               );
             });
+    System.out.println("time: " + ((System.currentTimeMillis() - start) / 1000.0d));
   }
 
   private static class TestFileReader extends CSVReader<TestLine> {

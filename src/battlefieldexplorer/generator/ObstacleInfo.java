@@ -42,6 +42,17 @@ public final class ObstacleInfo {
     return usual.get(id);
   }
 
+  public List<Obstacle> all() {
+    final LinkedList<Obstacle> result = new LinkedList<>();
+    for (Obstacle o : usual.values()) {
+      result.add(o);
+    }
+    for (Obstacle o : absolute.values()) {
+      result.add(o);
+    }
+    return result;
+  }
+
   private static class ObstacleReader extends CSVReader<Obstacle> {
 
     ObstacleReader(final String filename) {
