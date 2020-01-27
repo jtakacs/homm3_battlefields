@@ -49,6 +49,14 @@ where TERRAIN can be one of the following:
 
 and XXX and YYY can be any integer between 0 and 143.
 
+Example:
+
+curl -X POST -d "<SNOW;1;143>" http://localhost:7777/setfield
+
+This will set the terrain type to snow, and the coordinates to x=1 and y=143.
+
+
+
 #todo
 
 * non standard large map support
