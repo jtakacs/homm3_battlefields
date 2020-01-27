@@ -28,6 +28,7 @@ public abstract class CSVReader<T> implements Iterable<T> {
       try {
         is = new GZIPInputStream(is);
       } catch (IOException ex) {
+        throw new RuntimeException(ex);
       }
     }
     try (final Scanner scanner = new Scanner(is, US_ASCII.name())) {

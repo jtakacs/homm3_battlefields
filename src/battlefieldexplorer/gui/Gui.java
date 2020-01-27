@@ -3,7 +3,6 @@ package battlefieldexplorer.gui;
 import static battlefieldexplorer.util.Constants.BFIELD_HEIGHT;
 import static battlefieldexplorer.util.Constants.BFIELD_WIDTH;
 import static battlefieldexplorer.util.Constants.MAP_SIZE;
-import static battlefieldexplorer.util.Constants.ShipToShip;
 import static battlefieldexplorer.util.HexTools.hexIsVisible;
 import static battlefieldexplorer.util.HexTools.isOddRow;
 import static battlefieldexplorer.util.HexTools.posToHex;
@@ -15,11 +14,11 @@ import static javax.swing.UIManager.getInstalledLookAndFeels;
 import static javax.swing.UIManager.getLookAndFeelDefaults;
 import static javax.swing.UIManager.setLookAndFeel;
 import battlefieldexplorer.generator.*;
+import battlefieldexplorer.network.SocketListener;
 import battlefieldexplorer.search.*;
 import battlefieldexplorer.util.HexCellState;
 import battlefieldexplorer.util.HexTools;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -59,6 +58,7 @@ public class Gui extends JFrame {
   private final ImageIcon rightBallistaD;
   private final ImageIcon rightAmmocartD;
   private final ImageIcon rightFirstaidD;
+  private final SocketListener socketListener;
   private Rectangle area = new Rectangle(-1, -1, -1, -1);
   private boolean showFirstaidL = false;
   private boolean showCatapultL = false;
@@ -67,6 +67,7 @@ public class Gui extends JFrame {
   private boolean showFirstaidR = false;
   private boolean showBallistaR = false;
   private boolean showAmmocartR = false;
+  private AtomicBoolean readyToLoadBattleField = new AtomicBoolean(true);
 
   public Gui() {
     rootFrame = this;
@@ -107,6 +108,8 @@ public class Gui extends JFrame {
             .searchable(true)
             .apply();
     setupKeyNavigation();
+    socketListener = new SocketListener(this);
+    socketListener.start();
   }
 
   @Override
@@ -206,10 +209,9 @@ public class Gui extends JFrame {
   private void setAnchors(java.util.List<PositionedObstacle> obstacles) {
     AnchorCells.createOverlay(anchorLayer, obstacles);
   }
-  private AtomicBoolean asdf = new AtomicBoolean(true);
 
   public void setControlState(final Battlefield bf) {
-    asdf.set(false);
+    readyToLoadBattleField.set(false);
     invokeLater(() -> {
       xSpinner.setValue(bf.mapX);
       ySpinner.setValue(bf.mapY);
@@ -218,7 +220,7 @@ public class Gui extends JFrame {
       ySpinner.updateUI();
       terrainList.updateUI();
       displayBattlefield(bf);
-      asdf.set(true);
+      readyToLoadBattleField.set(true);
     });
   }
 
@@ -279,6 +281,7 @@ public class Gui extends JFrame {
     backgroundLayer = new JPanel();
     background = new JLabel();
     hexLayer = new JPanel();
+    tacticsLayer = new JPanel();
     obstacleLayer = new JPanel();
     passabilityLayer = new JPanel();
     anchorLayer = new JPanel();
@@ -405,7 +408,6 @@ public class Gui extends JFrame {
       }
     });
 
-    showBlocked.setSelected(true);
     showBlocked.setText("Passability");
     showBlocked.setFocusable(false);
     showBlocked.addChangeListener(new ChangeListener() {
@@ -450,7 +452,7 @@ public class Gui extends JFrame {
             .addComponent(ySpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
           .addComponent(showHex)
           .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 192, GroupLayout.PREFERRED_SIZE))
-        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        .addContainerGap(54, Short.MAX_VALUE))
     );
     jPanel1Layout.setVerticalGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING)
       .addGroup(jPanel1Layout.createSequentialGroup()
@@ -503,6 +505,15 @@ public class Gui extends JFrame {
     jLayeredPane1.setLayer(hexLayer, 20);
     jLayeredPane1.add(hexLayer);
 
+    tacticsLayer.setFocusable(false);
+    tacticsLayer.setMaximumSize(new Dimension(800, 556));
+    tacticsLayer.setMinimumSize(new Dimension(800, 556));
+    tacticsLayer.setOpaque(false);
+    tacticsLayer.setLayout(null);
+    jLayeredPane1.setLayer(tacticsLayer, 25);
+    jLayeredPane1.add(tacticsLayer);
+
+    obstacleLayer.setFocusable(false);
     obstacleLayer.setMaximumSize(new Dimension(800, 556));
     obstacleLayer.setMinimumSize(new Dimension(800, 556));
     obstacleLayer.setOpaque(false);
@@ -511,6 +522,7 @@ public class Gui extends JFrame {
     jLayeredPane1.setLayer(obstacleLayer, 30);
     jLayeredPane1.add(obstacleLayer);
 
+    passabilityLayer.setFocusable(false);
     passabilityLayer.setMaximumSize(new Dimension(800, 556));
     passabilityLayer.setMinimumSize(new Dimension(800, 556));
     passabilityLayer.setOpaque(false);
@@ -518,6 +530,7 @@ public class Gui extends JFrame {
     jLayeredPane1.setLayer(passabilityLayer, 40);
     jLayeredPane1.add(passabilityLayer);
 
+    anchorLayer.setFocusable(false);
     anchorLayer.setMaximumSize(new Dimension(800, 556));
     anchorLayer.setMinimumSize(new Dimension(800, 556));
     anchorLayer.setOpaque(false);
@@ -1054,7 +1067,7 @@ public class Gui extends JFrame {
 // </editor-fold>
 
   private void terrainListValueChanged(ListSelectionEvent evt) {//GEN-FIRST:event_terrainListValueChanged
-    if (asdf.get()) {
+    if (readyToLoadBattleField.get()) {
       loadBattleField();
     }
   }//GEN-LAST:event_terrainListValueChanged
@@ -1079,13 +1092,13 @@ public class Gui extends JFrame {
   }//GEN-LAST:event_clearButtonActionPerformed
 
   private void xSpinnerStateChanged(ChangeEvent evt) {//GEN-FIRST:event_xSpinnerStateChanged
-    if (asdf.get()) {
+    if (readyToLoadBattleField.get()) {
       loadBattleField();
     }
   }//GEN-LAST:event_xSpinnerStateChanged
 
   private void ySpinnerStateChanged(ChangeEvent evt) {//GEN-FIRST:event_ySpinnerStateChanged
-    if (asdf.get()) {
+    if (readyToLoadBattleField.get()) {
       loadBattleField();
     }
   }//GEN-LAST:event_ySpinnerStateChanged
@@ -1522,6 +1535,7 @@ public class Gui extends JFrame {
   private JCheckBox showObst;
   private JCheckBox showWarmachines;
   private JScrollPane tablePanel;
+  private JPanel tacticsLayer;
   private JList<String> terrainList;
   private JPanel warmachines;
   private JSpinner xSpinner;

@@ -12,7 +12,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.*;
 
-public class HexButton extends JButton {
+public final class HexButton extends JButton {
 
   private static final ImageIcon iconNormal = new ImageIcon(HexButton.class.getResource("/CCellGrd.png"));
   private static final ImageIcon iconEnabled = new ImageIcon(HexButton.class.getResource("/CCellGrdSel.png"));
@@ -29,7 +29,7 @@ public class HexButton extends JButton {
     init();
   }
 
-  private final void init() {
+  private void init() {
     final Dimension size = new Dimension(cellW, cellH);
     setSize(size);
     setMinimumSize(size);

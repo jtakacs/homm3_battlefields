@@ -11,22 +11,12 @@ import battlefieldexplorer.generator.PositionedObstacle;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.Paint;
-import java.awt.Stroke;
 import java.awt.image.BufferedImage;
 import java.util.Set;
 import javax.swing.*;
 
 public class Passability {
-
-  private static final ImageIcon iconNormal = new ImageIcon(HexButton.class.getResource("/CCellGrd.png"));
-  private static final ImageIcon iconEnabled = new ImageIcon(HexButton.class.getResource("/CCellGrdSel.png"));
-  private static final ImageIcon iconDisabled = new ImageIcon(HexButton.class.getResource("/CCellGrdDis.png"));
-
-  public static final ImageIcon bluecell = new ImageIcon(Passability.class.getResource("/CCellGrdOvr.png"));
 
   public static void createOverlay(final JComponent passabilityLayer, final Battlefield bf) {
     passabilityLayer.removeAll();
@@ -52,7 +42,6 @@ public class Passability {
     L.setPreferredSize(size);
     L.setMaximumSize(new Dimension(cellW + 8, cellH));
     L.setBackground(new java.awt.Color(255, 255, 255, 0));
-//    L.setBackground(stringToColor(name));
     L.setDoubleBuffered(true);
     L.setBorder(null);
     L.setOpaque(true);
@@ -60,10 +49,9 @@ public class Passability {
     L.setHorizontalAlignment(CENTER);
     L.setVerticalTextPosition(CENTER);
     L.setIconTextGap(0);
-//    L.setIcon(bluecell);
+//TODO image caching
     BufferedImage icon = new BufferedImage(45, 52, BufferedImage.TYPE_INT_ARGB);
     Graphics2D gr = icon.createGraphics();
-//    gr.clearRect(0, 0, 45, 52);
     gr.setColor(stringToColor(name));
     gr.fillArc(2, (52 - 45) / 2 + 2, 41, 41, 0, 360);
     gr.setColor(Color.BLACK);
