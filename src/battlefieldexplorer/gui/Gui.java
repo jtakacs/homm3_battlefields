@@ -277,6 +277,7 @@ public class Gui extends JFrame {
     showBlocked = new JCheckBox();
     showWarmachines = new JCheckBox();
     showAnchorCells = new JCheckBox();
+    alwaysOnTop = new JCheckBox();
     jLayeredPane1 = new JLayeredPane();
     backgroundLayer = new JPanel();
     background = new JLabel();
@@ -432,12 +433,21 @@ public class Gui extends JFrame {
       }
     });
 
+    alwaysOnTop.setText("Always on top");
+    alwaysOnTop.setFocusable(false);
+    alwaysOnTop.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent evt) {
+        alwaysOnTopStateChanged(evt);
+      }
+    });
+
     GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
     jPanel1.setLayout(jPanel1Layout);
     jPanel1Layout.setHorizontalGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING)
       .addGroup(jPanel1Layout.createSequentialGroup()
         .addContainerGap()
         .addGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING)
+          .addComponent(alwaysOnTop)
           .addComponent(showAnchorCells)
           .addComponent(showWarmachines)
           .addComponent(showBlocked)
@@ -452,7 +462,7 @@ public class Gui extends JFrame {
             .addComponent(ySpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
           .addComponent(showHex)
           .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 192, GroupLayout.PREFERRED_SIZE))
-        .addContainerGap(54, Short.MAX_VALUE))
+        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
     );
     jPanel1Layout.setVerticalGroup(jPanel1Layout.createParallelGroup(Alignment.LEADING)
       .addGroup(jPanel1Layout.createSequentialGroup()
@@ -474,7 +484,9 @@ public class Gui extends JFrame {
         .addComponent(showWarmachines)
         .addPreferredGap(ComponentPlacement.RELATED)
         .addComponent(showAnchorCells)
-        .addContainerGap(86, Short.MAX_VALUE))
+        .addPreferredGap(ComponentPlacement.RELATED)
+        .addComponent(alwaysOnTop)
+        .addContainerGap(63, Short.MAX_VALUE))
     );
 
     jLayeredPane1.setBorder(new LineBorder(new Color(0, 0, 0), 1, true));
@@ -1482,8 +1494,13 @@ public class Gui extends JFrame {
             .setContents(new StringSelection(tm.toCSV()), null);
   }//GEN-LAST:event_clipBoardBtnActionPerformed
 
+  private void alwaysOnTopStateChanged(ChangeEvent evt) {//GEN-FIRST:event_alwaysOnTopStateChanged
+    this.setAlwaysOnTop(alwaysOnTop.isSelected());
+  }//GEN-LAST:event_alwaysOnTopStateChanged
+
   //<editor-fold defaultstate="collapsed" desc=" Generated fields ">
   // Variables declaration - do not modify//GEN-BEGIN:variables
+  private JCheckBox alwaysOnTop;
   private JPanel amLselector;
   private JPanel amRselector;
   private JLabel ammocartL;
