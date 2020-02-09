@@ -7,6 +7,12 @@ import java.util.TreeSet;
 
 public class PositionedObstacle implements Comparable<PositionedObstacle> {
 
+  private static final int dyGrid = 42;
+  private static final int gridTop = 86;
+  private static final int gridEvenLeft = 80;
+  private static final int gridOddLeft = 58;
+  private static final int dwGrid = 44;
+
   public final Obstacle obstacle;
   public final int hex;
   public final int posX;
@@ -57,12 +63,11 @@ public class PositionedObstacle implements Comparable<PositionedObstacle> {
   }
 
   private void calcX() {
-    screenX = 12 + 22 * ((posY + 1) % 2) + posX * 44;
+    screenX = 14 + 22 * ((posY + 1) & 0x01) + posX * dwGrid;
   }
 
   private void calcY() {
-    //TODO these magic numbers need some tweaking
-    screenY = 139 + 84 * (posY / 2) - (50 * obstacle.height) + (isOddRow(posY) ? 42 : 0);
+    screenY = gridTop + dyGrid * (1 + posY - obstacle.height);
   }
 
   @Override

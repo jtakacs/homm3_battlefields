@@ -75,7 +75,7 @@ public class HexTools {
   }
 
   public static boolean isOddRow(final int y) {
-    return (y % 2) != 0;
+    return 0 < (y & 0x01);
   }
 
   public static void hexdump(final Set<Integer> blocked) {
