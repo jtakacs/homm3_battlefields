@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.regex.Matcher;
@@ -25,8 +24,14 @@ public class SocketListener {
   private static final Pattern pattern = Pattern.compile("^<([A-Z_]{1,20});([0-9]{1,3});([0-9]{1,3})>");
   private final HttpServer server;
   private final Gui gui;
+  private final boolean printException;
 
   public SocketListener(final Gui gui) {
+    this(gui, false);
+  }
+
+  public SocketListener(final Gui gui, final boolean printException) {
+    this.printException = printException;
     this.gui = gui;
     try {
       server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 7777), 0);
@@ -44,7 +49,7 @@ public class SocketListener {
     server.stop(0);
   }
 
-  private void listener(HttpExchange httpExchange) throws UnsupportedEncodingException, IOException {
+  private void listener(final HttpExchange httpExchange) {
     try {
       final StringBuilder textBuilder = new StringBuilder();
       try (Reader reader = new BufferedReader(new InputStreamReader(httpExchange.getRequestBody(), UTF_8))) {
@@ -53,6 +58,31 @@ public class SocketListener {
           textBuilder.append((char) c);
         }
       }
+      if (setField(textBuilder)) {
+        httpExchange.getResponseHeaders().add("Content-Type", "text/plain; charset=UTF-8");
+        httpExchange.sendResponseHeaders(200, OK.length);
+        OutputStream out = httpExchange.getResponseBody();
+        out.write(OK);
+        out.close();
+        httpExchange.close();
+      } else {
+        httpExchange.getResponseHeaders().add("Content-Type", "text/plain; charset=UTF-8");
+        httpExchange.sendResponseHeaders(400, ERR.length);
+        OutputStream out = httpExchange.getResponseBody();
+        out.write(ERR);
+        out.close();
+        httpExchange.close();
+      }
+    } catch (Exception e) {
+      if (printException) {
+        System.out.println(e.getMessage());
+        e.printStackTrace();
+      }
+    }
+  }
+
+  private boolean setField(final StringBuilder textBuilder) {
+    try {
       final Matcher m = pattern.matcher(textBuilder);
       if (m.matches()) {
         final String name = m.group(1).trim();
@@ -62,25 +92,16 @@ public class SocketListener {
           final Terrain terrain = Terrain.valueOf(name);
           final Battlefield bf = BattleFieldInfo.load().get(x, y, terrain);
           gui.setControlState(bf);
-
-          httpExchange.getResponseHeaders().add("Content-Type", "text/plain; charset=UTF-8");
-          httpExchange.sendResponseHeaders(200, OK.length);
-          OutputStream out = httpExchange.getResponseBody();
-          out.write(OK);
-          out.close();
-          return;
+          return true;
         }
       }
     } catch (Exception e) {
-      System.out.println(e.getMessage());
-      e.printStackTrace();
-      throw new RuntimeException(e);
+      if (printException) {
+        System.out.println(e.getMessage());
+        e.printStackTrace();
+      }
     }
-    httpExchange.getResponseHeaders().add("Content-Type", "text/plain; charset=UTF-8");
-    httpExchange.sendResponseHeaders(400, ERR.length);
-    OutputStream out = httpExchange.getResponseBody();
-    out.write(ERR);
-    out.close();
+    return false;
   }
 
   public static void main(String[] args) throws InterruptedException {
@@ -101,7 +122,7 @@ public class SocketListener {
       public void setControlState(Battlefield bf) {
         System.out.println(bf);
       }
-    });
+    }, true);
     s.start();
     Thread.sleep(120_000L);
     s.stop();
