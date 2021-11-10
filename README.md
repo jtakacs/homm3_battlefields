@@ -1,5 +1,7 @@
 #homm3_battlefields
 
+version 1.0.0
+
 #Download
 
 [BattlefieldExplorer.jar](https://github.com/jtakacs/homm3_battlefields/blob/master/dist/BattlefieldExplorer.jar)
